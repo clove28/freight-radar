@@ -1,0 +1,193 @@
+/* 货运雷达 · 全局样式（移动端优先，PC 响应式） */
+
+:root {
+  --brand: #ea580c;
+  --brand-2: #f97316;
+  --brand-3: #fb923c;
+  --ink: #1c1c1e;
+  --ink-2: #6b6b6f;
+  --ink-3: #8a8a90;
+  --bg: #f2f3f5;
+  --card: #ffffff;
+  --line: rgba(128, 128, 128, 0.18);
+  --green: #16a34a;
+  --red: #dc2626;
+  --amber: #d97706;
+  --radius: 16px;
+  --radius-s: 10px;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 手机壳容器：PC 上居中显示为手机尺寸，手机上全屏 */
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+}
+
+@media (min-width: 520px) {
+  .app-shell { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+}
+
+.page { flex: 1; overflow-y: auto; padding-bottom: 74px; }
+.page::-webkit-scrollbar { width: 5px; }
+.page::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 3px; }
+
+/* 底部导航 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid var(--line);
+  padding: 6px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index: 50;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  border-radius: 10px;
+  text-decoration: none;
+}
+.nav-item .ic { font-size: 20px; line-height: 1.1; }
+.nav-item.on { color: var(--brand); font-weight: 700; }
+
+/* 顶栏 */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 14px 16px 12px;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 55%, #fb923c 100%);
+  color: #fff;
+}
+.topbar .brand { display: flex; align-items: center; gap: 9px; }
+.topbar .logo {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.topbar .bname { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
+.topbar .bsub { font-size: 10.5px; color: rgba(255, 255, 255, 0.85); margin-top: 1px; }
+
+/* 卡片 */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 0 12px 12px;
+  box-shadow: var(--shadow);
+}
+.card.ret { border-color: rgba(249, 115, 22, 0.45); }
+
+/* 区块标题 */
+.sec-hd {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 800;
+  margin: 14px 14px 8px;
+}
+.sec-n { margin-left: auto; font-size: 11px; color: var(--ink-3); font-weight: 600; }
+
+/* 按钮 */
+.btn-p {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; font-weight: 800; font-size: 15px;
+  border: none; border-radius: 14px; padding: 13px 0;
+  cursor: pointer; text-align: center; text-decoration: none;
+}
+.btn-p:active { opacity: 0.88; }
+.btn-p:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-g {
+  display: block; width: 100%;
+  background: #fff; color: var(--ink); font-weight: 700; font-size: 15px;
+  border: 1px solid rgba(128, 128, 128, 0.35); border-radius: 14px; padding: 12px 0;
+  cursor: pointer; text-align: center; text-decoration: none;
+}
+.row-actions { display: flex; gap: 10px; margin: 0 12px 12px; }
+.row-actions .btn-p, .row-actions .btn-g { flex: 1; }
+
+/* 状态：加载 / 空 / 错误 */
+.state-box { padding: 56px 24px; text-align: center; color: var(--ink-3); }
+.state-box .ic { font-size: 44px; margin-bottom: 10px; }
+.state-box .t { font-size: 15px; color: var(--ink-2); margin-bottom: 14px; }
+
+/* 输入 */
+.inp {
+  width: 100%; padding: 11px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-s);
+  font-size: 15px; background: #fff; color: var(--ink);
+  outline: none;
+}
+.inp:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+/* 徽标 */
+.tag {
+  display: inline-block; font-size: 11px; padding: 2px 8px;
+  border-radius: 6px; border: 1px solid transparent; margin-right: 4px;
+}
+.tag-orange { background: rgba(249, 115, 22, 0.1); color: var(--brand); border-color: rgba(249, 115, 22, 0.3); }
+.tag-gray { background: #f1f2f4; color: var(--ink-3); border-color: rgba(128, 128, 128, 0.2); }
+.tag-green { background: rgba(22, 163, 74, 0.1); color: var(--green); border-color: rgba(22, 163, 74, 0.3); }
+.tag-red { background: rgba(220, 38, 38, 0.1); color: var(--red); border-color: rgba(220, 38, 38, 0.3); }
+
+/* 数字格式化 */
+.num { font-variant-numeric: tabular-nums; }
+.money { font-weight: 800; }
+.money.positive { color: var(--green); }
+.money.negative { color: var(--red); }
+
+/* 加载动画 */
+.spinner {
+  width: 34px; height: 34px; margin: 0 auto 12px;
+  border: 4px solid rgba(249, 115, 22, 0.2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* P13 打印：仅打印账本内容，隐藏导航/按钮 */
+@media print {
+  .bottom-nav { display: none !important; }
+  .topbar { background: #fff !important; color: #111 !important; }
+  .topbar .bsub { color: #555 !important; }
+  button { display: none !important; }
+  .app-shell { max-width: none !important; box-shadow: none !important; }
+  .page { padding-bottom: 0 !important; overflow: visible !important; }
+  body { background: #fff !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "freight-radar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "货运雷达 · 面向个体大货车司机的 AI 货运决策系统",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server/index.ts",
+    "start": "tsx src/server/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:sqlite": "node --test tests/sqlite.integration.mjs",
+    "test:all": "vitest run && node --test tests/sqlite.integration.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

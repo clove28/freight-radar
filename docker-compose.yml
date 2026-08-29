@@ -1,0 +1,39 @@
+# 货运雷达 · 一键部署（P11）
+# 用法：docker compose up -d --build
+# 说明：单服务部署（前端+后端+WebSocket 一体）；如需 HTTPS 请加 nginx（deploy/nginx.conf.example）
+services:
+  freight-radar:
+    build: .
+    container_name: freight-radar
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PERSIST=sqlite
+      - DATA_DIR=/app/data
+      # 安全：上线务必开启鉴权
+      - AUTH_REQUIRED=${AUTH_REQUIRED:-1}
+      # 高德（可选）：真实路线/天气
+      - AMAP_KEY=${AMAP_KEY:-}
+      # 短信（可选）：SMS_PROVIDER=aliyun + 密钥
+      - SMS_PROVIDER=${SMS_PROVIDER:-}
+      - ALIYUN_SMS_ACCESS_KEY=${ALIYUN_SMS_ACCESS_KEY:-}
+      - ALIYUN_SMS_SECRET=${ALIYUN_SMS_SECRET:-}
+      - ALIYUN_SMS_SIGN=${ALIYUN_SMS_SIGN:-}
+      - ALIYUN_SMS_TEMPLATE=${ALIYUN_SMS_TEMPLATE:-}
+      # 真实货源 API（可选）
+      - CARGO_SOURCE=${CARGO_SOURCE:-}
+      - CARGO_API_URL=${CARGO_API_URL:-}
+      - CARGO_API_KEY=${CARGO_API_KEY:-}
+      # 行情 API（可选）
+      - QUOTE_API_URL=${QUOTE_API_URL:-}
+      - QUOTE_API_KEY=${QUOTE_API_KEY:-}
+      # 真实 LLM（P14 火山方舟）：配置后 AI 助手用 DeepSeek 大模型，否则规则引擎
+      - ARK_API_KEY=${ARK_API_KEY:-}
+      - ARK_MODEL=${ARK_MODEL:-deepseek-v4-pro-ga-260813}
+      - ARK_BASE_URL=${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+    volumes:
+      - fr-data:/app/data
+
+volumes:
+  fr-data:

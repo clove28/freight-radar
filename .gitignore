@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# 持久化数据
+data/
+.env

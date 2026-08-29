@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1300" viewBox="0 0 960 1300" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <linearGradient id="bgr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1f2937"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="1300" fill="url(#bgr)"/>
+
+  <text x="480" y="50" text-anchor="middle" fill="#fff" font-size="30" font-weight="bold">🔄 货运雷达 · 产品闭环流程</text>
+  <text x="480" y="82" text-anchor="middle" fill="#9ca3af" font-size="15">从"司机一句话"到"哪一单值得跑"的完整决策链路</text>
+
+  <!-- 1 输入 -->
+  <rect x="280" y="110" width="400" height="70" rx="14" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+  <text x="480" y="140" text-anchor="middle" fill="#fb923c" font-size="16" font-weight="bold">💬 用户输入一句话</text>
+  <text x="480" y="162" text-anchor="middle" fill="#cbd5e1" font-size="13">"帮我找明天回临汾的黄豆粕，每公里不低于3块"</text>
+
+  <line x1="480" y1="180" x2="480" y2="210" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 2 理解 -->
+  <rect x="280" y="210" width="400" height="64" rx="14" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="480" y="238" text-anchor="middle" fill="#a78bfa" font-size="16" font-weight="bold">① 自然语言理解（LLM）</text>
+  <text x="480" y="260" text-anchor="middle" fill="#cbd5e1" font-size="13">结构化 → {to:临汾, cargo:黄豆粕, minPerKm:3}</text>
+
+  <line x1="480" y1="274" x2="480" y2="304" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 3 查询 -->
+  <rect x="280" y="304" width="400" height="64" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="480" y="332" text-anchor="middle" fill="#60a5fa" font-size="16" font-weight="bold">② 数据查询（真实数据）</text>
+  <text x="480" y="354" text-anchor="middle" fill="#cbd5e1" font-size="13">CargoRepository → 货源列表（禁止凭空生成）</text>
+
+  <line x1="480" y1="368" x2="480" y2="398" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 4 过滤 -->
+  <rect x="280" y="398" width="400" height="64" rx="14" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+  <text x="480" y="426" text-anchor="middle" fill="#34d399" font-size="16" font-weight="bold">③ 业务过滤</text>
+  <text x="480" y="448" text-anchor="middle" fill="#cbd5e1" font-size="13">车型 / 载重 / 回程 / 运距 / 收益下限</text>
+
+  <line x1="480" y1="462" x2="480" y2="492" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 5 成本 -->
+  <rect x="280" y="492" width="400" height="74" rx="14" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+  <text x="480" y="518" text-anchor="middle" fill="#fb923c" font-size="16" font-weight="bold">④ 成本计算（确定性，LLM 禁止算钱）</text>
+  <text x="480" y="540" text-anchor="middle" fill="#cbd5e1" font-size="12.5">油费=里程/100×油耗×油价</text>
+  <text x="480" y="558" text-anchor="middle" fill="#cbd5e1" font-size="12.5">净收益=运费−总成本；每公里=净收益/里程</text>
+
+  <line x1="480" y1="566" x2="480" y2="596" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 6 评分 -->
+  <rect x="280" y="596" width="400" height="74" rx="14" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+  <text x="480" y="622" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="bold">⑤ 综合评分（加权）</text>
+  <text x="480" y="644" text-anchor="middle" fill="#cbd5e1" font-size="12.5">收益40 + 路线20 + 回程20 + 车型10 + 时间10</text>
+  <text x="480" y="662" text-anchor="middle" fill="#cbd5e1" font-size="12.5">+ 信用降权（黑名单-30）+ 行情价格异常标记</text>
+
+  <line x1="480" y1="670" x2="480" y2="700" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 7 TopN -->
+  <rect x="280" y="700" width="400" height="58" rx="14" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+  <text x="480" y="726" text-anchor="middle" fill="#34d399" font-size="16" font-weight="bold">⑥ 排序取 Top N</text>
+  <text x="480" y="748" text-anchor="middle" fill="#cbd5e1" font-size="13">按综合分降序，取前 N 条</text>
+
+  <line x1="480" y1="758" x2="480" y2="788" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 8 解释 -->
+  <rect x="280" y="788" width="400" height="64" rx="14" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="480" y="816" text-anchor="middle" fill="#a78bfa" font-size="16" font-weight="bold">⑦ LLM 解释（基于真实数据）</text>
+  <text x="480" y="838" text-anchor="middle" fill="#cbd5e1" font-size="13">"临沂黄豆粕最划算：净收益3556元、5.56元/km"</text>
+
+  <line x1="480" y1="852" x2="480" y2="882" stroke="#f97316" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 9 后续闭环 -->
+  <rect x="180" y="882" width="600" height="120" rx="14" fill="#052e16" stroke="#16a34a" stroke-width="2"/>
+  <text x="480" y="910" text-anchor="middle" fill="#4ade80" font-size="16" font-weight="bold">⑧ 接单后的完整闭环</text>
+  <text x="480" y="936" text-anchor="middle" fill="#d1fae5" font-size="13">接单 → 证据链8步（拍照/签字/定位） → 损耗对比（自然损耗无责）</text>
+  <text x="480" y="956" text-anchor="middle" fill="#d1fae5" font-size="13">→ 证据包 → 记账 → 月度报表 → 个人画像（常跑线路/完成率）</text>
+  <text x="480" y="980" text-anchor="middle" fill="#d1fae5" font-size="13">→ 反哺评分与推荐（历史路线/每公里趋势）</text>
+
+  <!-- 回环箭头 -->
+  <path d="M 780 942 C 900 942 900 250 900 250 C 900 160 840 150 690 150" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="905" y="540" fill="#4ade80" font-size="12" transform="rotate(90 905 540)">历史画像反哺推荐</text>
+
+  <!-- 底部关键原则 -->
+  <rect x="180" y="1040" width="600" height="90" rx="12" fill="#1e293b" stroke="#f97316"/>
+  <text x="480" y="1068" text-anchor="middle" fill="#fb923c" font-size="15" font-weight="bold">🔑 核心原则：计算与 AI 分离</text>
+  <text x="480" y="1094" text-anchor="middle" fill="#cbd5e1" font-size="13">确定性计算（成本/评分/收益）→ 业务代码完成</text>
+  <text x="480" y="1114" text-anchor="middle" fill="#cbd5e1" font-size="13">AI（LLM）→ 只做"理解需求 + 解释推荐"，禁止编造金额</text>
+
+  <text x="480" y="1190" text-anchor="middle" fill="#6b7280" font-size="13">外部依赖（高德/DeepSeek/货源API）失败自动降级，核心计算永远本地可跑</text>
+</svg>
