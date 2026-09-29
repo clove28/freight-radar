@@ -18,7 +18,7 @@ type State =
   | { status: 'ready'; list: ScoredCargoView[]; total: number; page: number };
 
 const SORTS: Array<{ v: LoadSort; label: string }> = [
-  { v: 'ai', label: '🤖 AI推荐' },
+  { v: 'ai', label: '综合评分' },
   { v: 'netIncome', label: '💰 净收益' },
   { v: 'perKm', label: '📈 每公里' },
   { v: 'distance', label: '📍 距离' },
@@ -99,7 +99,7 @@ export default function LoadHall() {
             style={{
               flex: 1, minWidth: 88, padding: '8px 4px', borderRadius: 10, fontSize: 12.5,
               fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(128,128,128,.25)',
-              background: q.sort === s.v ? 'linear-gradient(135deg,#f97316,#fb923c)' : '#fff',
+              background: q.sort === s.v ? '#c2410c' : '#fff',
               color: q.sort === s.v ? '#fff' : '#1c1c1e',
             }}
           >

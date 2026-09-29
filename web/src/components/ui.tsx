@@ -81,6 +81,7 @@ export function CargoCard({
   const quoteNote = 'quoteNote' in item ? item.quoteNote : '';
   const badge = 'creditBadge' in item ? item.creditBadge : 'none';
   const blacklisted = 'blacklisted' in item ? item.blacklisted : false;
+  const credibility = 'credibility' in item ? item.credibility : undefined;
   return (
     <div
       className={`card ${item.isBackhaul ? 'ret' : ''}`}
@@ -130,6 +131,18 @@ export function CargoCard({
             {badge === 'good' && <span className="tag tag-green">👍 靠谱</span>}
             {badge === 'mid' && <span className="tag" style={{ background: 'rgba(217,119,6,.1)', color: '#d97706', borderColor: 'rgba(217,119,6,.3)' }}>🟡 一般</span>}
             {badge === 'bad' && <span className="tag tag-red">⚠ 黑名单</span>}
+            {credibility && (
+              <span style={{
+                fontWeight: 700, fontSize: 11, padding: '2px 8px', borderRadius: 8, border: '1px solid',
+                ...(credibility.level === 'high'
+                  ? { background: 'rgba(22,163,74,.12)', color: '#16a34a', borderColor: 'rgba(22,163,74,.3)' }
+                  : credibility.level === 'mid'
+                    ? { background: 'rgba(217,119,6,.1)', color: '#d97706', borderColor: 'rgba(217,119,6,.3)' }
+                    : { background: 'rgba(220,38,38,.1)', color: '#dc2626', borderColor: 'rgba(220,38,38,.3)' }),
+              }}>
+                {credibility.level === 'high' ? '✅' : credibility.level === 'mid' ? '🟡' : '⚠'} 可信 {credibility.score}
+              </span>
+            )}
             {priceFlag === 'low' && <span className="tag tag-red">⚠ 价格偏低</span>}
             {priceFlag === 'high' && <span className="tag tag-red">⚠ 价格异常高</span>}
           </div>

@@ -88,15 +88,15 @@ body {
   top: 0;
   z-index: 40;
   padding: 14px 16px 12px;
-  background: linear-gradient(135deg, #ea580c 0%, #f97316 55%, #fb923c 100%);
+  background: #c2410c;
   color: #fff;
 }
 .topbar .brand { display: flex; align-items: center; gap: 9px; }
 .topbar .logo {
-  width: 38px; height: 38px; border-radius: 12px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
 }
 .topbar .bname { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
 .topbar .bsub { font-size: 10.5px; color: rgba(255, 255, 255, 0.85); margin-top: 1px; }
@@ -123,9 +123,9 @@ body {
 /* 按钮 */
 .btn-p {
   display: block; width: 100%;
-  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  background: #c2410c;
   color: #fff; font-weight: 800; font-size: 15px;
-  border: none; border-radius: 14px; padding: 13px 0;
+  border: none; border-radius: 12px; padding: 13px 0;
   cursor: pointer; text-align: center; text-decoration: none;
 }
 .btn-p:active { opacity: 0.88; }

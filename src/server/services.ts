@@ -23,6 +23,9 @@ import {
 } from '../core/order.js';
 import { priceFlagByQuote } from '../core/quote.js';
 import { creditBadge, creditPenalty, type Credit, type RatingLevel } from '../core/credit.js';
+import { DEMO_RECHARGE_AMOUNT, SERVICE_FEE_AMOUNT } from '../core/serviceFee.js';
+import { feedbackCounts, type CargoFeedback } from '../core/cargoFeedback.js';
+import { cargoCompleteness, computeCredibility, type CredibilityResult } from '../core/credibility.js';
 import { buildHistoryInsights, type HistoryInsights } from '../core/history.js';
 import { buildStats, type StatsView } from '../core/stats.js';
 import { MockRoutePlanner } from '../core/routePlanner.js';
@@ -51,6 +54,8 @@ export interface ScoredCargoView extends ScoredCargo {
   blacklisted: boolean;
   /** 信用降权后的最终分（P3：黑名单/差评货主降权） */
   adjustedTotal: number;
+  /** 货源可信度（P1：0–100 分 + 证据 + 分级，详见 core/credibility.ts） */
+  credibility: CredibilityResult;
 }
 
 export interface AppServices {
@@ -78,12 +83,22 @@ export interface AppServices {
   rateOwner(owner: string, level: RatingLevel, tags?: string[], comment?: string): Promise<Credit | null>;
   unblacklistOwner(owner: string): Promise<Credit | undefined>;
 
+  // P1 平台服务费（虚拟额度，不可提现/转账/兑换）
+  getServiceFeeBalance(): Promise<number>;
+  rechargeServiceFee(amount?: number): Promise<number>;
+
+  // P1 结构化卡友反馈
+  listCargoFeedback(cargoId: string): Promise<CargoFeedback[]>;
+  submitCargoFeedback(cargoId: string, input: Omit<CargoFeedback, 'id' | 'cargoId' | 'driverId' | 'createdAt'>): Promise<CargoFeedback>;
+
   // P3 历史画像
   getHistory(): Promise<HistoryInsights>;
 
   // P10 数据统计
   getStats(): Promise<StatsView>;
 }
+
+const DRIVER_ID = 'd1'; // P1：单司机演示；P8 多司机后从当前会话取
 
 export function createAppServices(repos: RepositorySet, assistant: AssistantDeps, planner: RoutePlanner = new MockRoutePlanner()): AppServices {
   /**
@@ -115,12 +130,32 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
   }
 
   /** ScoredCargo + 信用 → ScoredCargoView（行情价格异常 + 信用徽标 + 降权分） */
-  function applyCredit(s: ScoredCargo, credits: Record<string, Credit>): ScoredCargoView {
+  async function applyCredit(s: ScoredCargo, credits: Record<string, Credit>): Promise<ScoredCargoView> {
     // P5：按货类/里程行情区间判断价格异常（替代固定阈值）
     const { flag, quote } = priceFlagByQuote(s.cargo.price, s.cargo.km, s.cargo.cls);
     const credit = credits[s.cargo.owner];
     const badge = creditBadge(credit);
     const penalty = creditPenalty(credit);
+    // P1：可信度聚合（货源完整度 + 认证 + 信用 + 价格 + 时效 + 卡友反馈）
+    const completeness = cargoCompleteness([
+      !!s.cargo.pickup,
+      !!s.cargo.phone,
+      !!s.cargo.truck,
+      s.cargo.wt > 0,
+      !!s.cargo.owner,
+    ]);
+    // P1：卡友反馈汇入可信度（装货等待/装卸难易）
+    const fb = await repos.cargoFeedback.listByCargo(s.cargo.id);
+    const counts = feedbackCounts(fb);
+    const credibility = computeCredibility({
+      verified: s.cargo.verified,
+      credit,
+      priceFlag: flag,
+      completeness,
+      pub: s.cargo.pub,
+      feedbackPositive: counts.positive,
+      feedbackNegative: counts.negative,
+    });
     return {
       ...s,
       priceFlag: flag,
@@ -129,6 +164,7 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
       creditBadge: badge,
       blacklisted: !!(credit && credit.blacklisted),
       adjustedTotal: Math.max(0, s.score.total + penalty),
+      credibility,
     };
   }
 
@@ -142,8 +178,10 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
 
     // P3：用真实空驶里程计算 Top 推荐
     const costFor = await buildCostFor(cargos, vehicle);
-    const scored = rankCargoes(cargos, vehicle, { topN: 3 }, costFor)
-      .map(s => applyCredit(s, credits));
+    const scored = await Promise.all(
+      rankCargoes(cargos, vehicle, { topN: 3 }, costFor)
+        .map(s => applyCredit(s, credits)),
+    );
 
     const now = new Date();
     const thisMonth = books.filter(b => {
@@ -193,7 +231,7 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
     const ranked = rankCargoes([cargo], vehicle, { topN: 1 }, costFor);
     if (!ranked.length) return null;
     const sc = ranked[0]!;
-    return applyCredit({ ...sc, cost: sc.cost }, credits);
+    return await applyCredit({ ...sc, cost: sc.cost }, credits);
   }
 
   /** 单货源"为什么推荐"：复用 LLM 解释能力，输入为真实计算数据 */
@@ -233,7 +271,7 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
     if (sort === 'netIncome') ranked.sort((a, b) => b.cost.netIncome - a.cost.netIncome);
     else if (sort === 'perKm') ranked.sort((a, b) => b.cost.perKm - a.cost.perKm);
     else if (sort === 'distance') ranked.sort((a, b) => a.cargo.km - b.cargo.km);
-    return ranked.map(s => applyCredit(s, credits));
+    return Promise.all(ranked.map(s => applyCredit(s, credits)));
   }
 
   async function updateVehicle(vehicle: Vehicle): Promise<Vehicle> {
@@ -252,8 +290,14 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
   async function acceptLoad(loadId: string): Promise<Order | null> {
     const cargo = await repos.cargo.getById(loadId);
     if (!cargo || cargo.status !== 'open') return null;
+    // P1：接单前先扣减速平台服务费（虚拟额度），余额不足则抛出（API 层转 400）
+    const orderId = `O${Date.now().toString(36).toUpperCase()}`;
+    const chargeRes = await repos.serviceFee.charge(DRIVER_ID, orderId, SERVICE_FEE_AMOUNT);
+    if (!chargeRes.ok) {
+      throw new Error(chargeRes.reason ?? '虚拟服务额度不足，请先充值演示');
+    }
     const order = createOrder({
-      id: `O${Date.now().toString(36).toUpperCase()}`,
+      id: orderId,
       loadId,
       from: cargo.from,
       to: cargo.to,
@@ -269,6 +313,29 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
     await repos.cargo.save(cargo);
     await repos.order.save(order);
     return order;
+  }
+
+  async function getServiceFeeBalance(): Promise<number> {
+    return repos.serviceFee.getBalance(DRIVER_ID);
+  }
+
+  async function rechargeServiceFee(amount: number = DEMO_RECHARGE_AMOUNT): Promise<number> {
+    return repos.serviceFee.addCredit(DRIVER_ID, amount);
+  }
+
+  async function listCargoFeedback(cargoId: string): Promise<CargoFeedback[]> {
+    return repos.cargoFeedback.listByCargo(cargoId);
+  }
+
+  async function submitCargoFeedback(cargoId: string, input: Omit<CargoFeedback, 'id' | 'cargoId' | 'driverId' | 'createdAt'>): Promise<CargoFeedback> {
+    const f: CargoFeedback = {
+      id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      cargoId,
+      driverId: DRIVER_ID,
+      createdAt: Date.now(),
+      ...input,
+    };
+    return repos.cargoFeedback.add(f);
   }
 
   async function getOrder(id: string): Promise<Order | null> {
@@ -374,6 +441,10 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
     listCredits,
     rateOwner,
     unblacklistOwner,
+    getServiceFeeBalance,
+    rechargeServiceFee,
+    listCargoFeedback,
+    submitCargoFeedback,
     getHistory,
     getStats,
   };

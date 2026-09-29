@@ -296,7 +296,7 @@ export default function VehiclePage() {
       <div className="sec-hd">常跑路线</div>
       <div className="card">
         {v.routes.length === 0 && (
-          <div style={{ fontSize: 12, color: '#8a8a90', marginBottom: 8 }}>还没有常跑路线，加上后 AI 推荐会更懂你</div>
+          <div style={{ fontSize: 12, color: '#8a8a90', marginBottom: 8 }}>还没有常跑路线，加上后会更懂你</div>
         )}
         {v.routes.map(r => (
           <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid rgba(128,128,128,.08)' }}>

@@ -19,10 +19,13 @@ import type {
   Order,
   Recommendation,
   RouteEnvironment,
+  RouteCompare,
   RouteStrategy,
   ScoredCargoView,
   StatsView,
   PagedCargos,
+  ServiceFeeBalance,
+  CargoFeedback,
   Vehicle,
 } from './types';
 
@@ -170,6 +173,8 @@ export const api = {
   // P4 路线环境
   getRouteEnvironment: (from: string, to: string, strategy: RouteStrategy = 'highway') =>
     get<RouteEnvironment>(`/route/environment?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&strategy=${strategy}`),
+  getRouteCompare: (from: string, to: string) =>
+    get<RouteCompare>(`/route/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
 
   // P6 多司机
   listDrivers: () => get<DriverListResponse>('/drivers'),
@@ -206,4 +211,13 @@ export const api = {
   syncUpload: (payload: { orders?: unknown[]; credits?: Record<string, unknown>; books?: unknown[] }) =>
     post<{ ok: boolean; saved: number }>('/sync/upload', payload),
   syncDownload: () => get<Record<string, unknown>>('/sync/download'),
+
+  // P1 平台服务费（虚拟额度）
+  getServiceFeeBalance: () => get<ServiceFeeBalance>('/service-fee/balance'),
+  rechargeServiceFee: () => post<ServiceFeeBalance>('/service-fee/recharge', {}),
+
+  // P1 结构化卡友反馈
+  listCargoFeedback: (id: string) => get<CargoFeedback[]>(`/cargos/${encodeURIComponent(id)}/feedback`),
+  submitCargoFeedback: (id: string, input: Partial<CargoFeedback>) =>
+    post<CargoFeedback>(`/cargos/${encodeURIComponent(id)}/feedback`, input),
 };

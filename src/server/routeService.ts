@@ -31,6 +31,19 @@ export interface RouteEnvironmentResult {
   real: boolean;
 }
 
+/** 高速 vs 国道 对比结果 */
+export interface RouteCompareResult {
+  from: string;
+  to: string;
+  /** 高速路线（时间短 · 有过路费） */
+  highway: { plan: DrivingPlan; fuel: number; totalCost: number };
+  /** 国道（时间长 · 免过路费） */
+  national: { plan: DrivingPlan; fuel: number; totalCost: number };
+  /** 哪个总成本更低 */
+  cheaper: 'highway' | 'national';
+  real: boolean;
+}
+
 export class RouteEnvironmentService {
   constructor(private amap: AmapClient) {}
 
@@ -68,6 +81,18 @@ export class RouteEnvironmentService {
       pois,
       real: plan.real,
     };
+  }
+
+  /** 高速 vs 国道 对比：同样里程，哪个总成本（过路费+油费）更低 */
+  async compare(from: string, to: string, vehicle: { fuelPer100km: number; fuelPrice: number }): Promise<RouteCompareResult> {
+    const [highway, national] = await Promise.all([
+      this.amap.driving(from, to, 0), // 0 = 高速优先
+      this.amap.driving(from, to, 1), // 1 = 国道优先
+    ]);
+    const fuel = (p: DrivingPlan) => Math.round((p.distanceKm / 100) * vehicle.fuelPer100km * vehicle.fuelPrice);
+    const h = { plan: highway, fuel: fuel(highway), totalCost: Math.round(highway.toll + fuel(highway)) };
+    const n = { plan: national, fuel: fuel(national), totalCost: Math.round(national.toll + fuel(national)) };
+    return { from, to, highway: h, national: n, cheaper: h.totalCost <= n.totalCost ? 'highway' : 'national', real: highway.real };
   }
 
   /** 天气对某车油耗的最终修正系数（含天然气） */

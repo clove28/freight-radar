@@ -164,7 +164,7 @@ export default function Login() {
         <div style={{ fontSize: 52, marginBottom: 8 }}>🚛</div>
         <div style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>货运雷达</div>
         <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.6)', marginTop: 4 }}>
-          AI 帮你判断哪一单值得跑
+          帮你判断哪一单值得跑
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { createMockRepositories } from '../data/mock.js';
 import { createFileRepositories } from '../data/fileRepository.js';
+import { DEMO_RECHARGE_AMOUNT, SERVICE_FEE_AMOUNT } from '../core/serviceFee.js';
 import { createCargoRepository } from '../data/apiRepository.js';
 import { createSmsProvider } from '../data/providers.js';
 import { createLlm } from '../ai/arkLlm.js';
@@ -231,6 +232,34 @@ export function createApp(
     }
   });
 
+  // P1 卡友反馈：结构化（装货等待/装卸难易/入口经验）
+  app.get('/api/cargos/:id/feedback', async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        res.status(400).json({ error: '缺少货源 id' });
+        return;
+      }
+      res.json(await svc.listCargoFeedback(id));
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
+  app.post('/api/cargos/:id/feedback', async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        res.status(400).json({ error: '缺少货源 id' });
+        return;
+      }
+      const item = await svc.submitCargoFeedback(id, req.body ?? {});
+      res.status(201).json(item);
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
   // AI 货运助手：自然语言 → 推荐
   app.post('/api/assistant', async (req: Request, res: Response) => {
     const text = String(req.body?.text ?? '').trim();
@@ -321,6 +350,31 @@ export function createApp(
         return;
       }
       res.status(201).json(order);
+    } catch (e) {
+      const msg = (e as Error).message || '接单失败';
+      // P1：服务费余额不足是业务错误（400），非服务器错误（500）
+      if (msg.includes('额度不足')) {
+        res.status(400).json({ error: msg, code: 'INSUFFICIENT_CREDIT' });
+      } else {
+        res.status(500).json({ error: msg });
+      }
+    }
+  });
+
+  // P1 平台服务费（虚拟额度，不可提现/转账/兑换现金）
+  app.get('/api/service-fee/balance', async (_req: Request, res: Response) => {
+    try {
+      const balance = await svc.getServiceFeeBalance();
+      res.json({ balance, amount: SERVICE_FEE_AMOUNT, rechargeAmount: DEMO_RECHARGE_AMOUNT });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
+  app.post('/api/service-fee/recharge', async (_req: Request, res: Response) => {
+    try {
+      const balance = await svc.rechargeServiceFee();
+      res.json({ balance, added: DEMO_RECHARGE_AMOUNT });
     } catch (e) {
       res.status(500).json({ error: (e as Error).message });
     }
@@ -642,6 +696,23 @@ export function createApp(
   });
 
   // ---------- P7 行情指数 ----------
+
+  // 高速 vs 国道 对比（用司机车辆算哪个划算）：GET /api/route/compare?from=广州&to=武汉
+  app.get('/api/route/compare', async (req: Request, res: Response) => {
+    try {
+      const from = String(req.query.from ?? '');
+      const to = String(req.query.to ?? '');
+      if (!from || !to) {
+        res.status(400).json({ error: '缺少 from/to' });
+        return;
+      }
+      const vehicle = await reposFinal.vehicle.get();
+      const result = await routeService.compare(from, to, { fuelPer100km: vehicle.fuelPer100km, fuelPrice: vehicle.fuelPrice });
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
 
   // 各货类行情区间：GET /api/quote?cls=普货&km=500
   app.get('/api/quote', async (req: Request, res: Response) => {

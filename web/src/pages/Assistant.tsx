@@ -44,9 +44,9 @@ export default function Assistant() {
     <div>
       <header className="topbar">
         <div className="brand">
-          <div className="logo">🤖</div>
+          <div className="logo">🔍</div>
           <div>
-            <div className="bname">AI 货运助手</div>
+            <div className="bname">问一问</div>
             <div className="bsub">说人话，我帮你算哪单值得跑</div>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function Assistant() {
           style={{ resize: 'none' }}
         />
         <button className="btn-p" style={{ marginTop: 8 }} onClick={() => ask(input)} disabled={state.status === 'loading'}>
-          {state.status === 'loading' ? 'AI 正在计算…' : '🤖 帮我找'}
+          {state.status === 'loading' ? '正在计算…' : '帮我看'}
         </button>
       </div>
 
@@ -92,13 +92,13 @@ export default function Assistant() {
       {state.status === 'ready' && (
         <>
           <div className="sec-hd">
-            🤖 AI 推荐<span className="sec-n">条件：{state.result.raw}</span>
+            ♨️ 值得跑的<span className="sec-n">条件：{state.result.raw}</span>
           </div>
 
-          {/* AI 解释 */}
+          {/* 为什么 */}
           <div className="card" style={{ borderColor: 'rgba(249,115,22,.4)', background: 'rgba(249,115,22,.04)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontWeight: 800 }}>AI 怎么说</span>
+              <span style={{ fontWeight: 800 }}>为什么</span>
               {state.result.engine === 'deepseek' ? (
                 <span
                   style={{

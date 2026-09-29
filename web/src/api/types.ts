@@ -155,6 +155,38 @@ export interface PagedCargos {
   limit: number;
 }
 
+/** 货源可信度（对应后端 CredibilityResult，P1） */
+export interface CredibilityResult {
+  score: number;
+  level: 'high' | 'mid' | 'low';
+  evidence: string[];
+  pending: boolean;
+}
+
+/** 平台服务费信息（P1，虚拟额度，不可提现/转账/兑换） */
+export interface ServiceFeeBalance {
+  balance: number;
+  amount: number;
+  rechargeAmount: number;
+}
+
+/** 装卸难易（卡友反馈） */
+export type FeedbackDifficulty = 'easy' | 'medium' | 'hard';
+
+/** 卡友反馈（P1，对应后端 CargoFeedback） */
+export interface CargoFeedback {
+  id: string;
+  cargoId: string;
+  driverId: string;
+  loadWaitHours: number | null;
+  loadDifficulty: FeedbackDifficulty | null;
+  unloadDifficulty: FeedbackDifficulty | null;
+  entranceTips: string;
+  parkingTips: string;
+  comment: string;
+  createdAt: number;
+}
+
 /** 货源列表项：带价格异常标记与货主信用（对应后端 ScoredCargoView） */
 export interface ScoredCargoView extends ScoredCargo {
   priceFlag: 'low' | 'high' | 'normal';
@@ -167,6 +199,8 @@ export interface ScoredCargoView extends ScoredCargo {
   blacklisted: boolean;
   /** 信用降权后的最终分 */
   adjustedTotal: number;
+  /** 货源可信度（P1） */
+  credibility: CredibilityResult;
 }
 
 /** 货主信用（对应后端 Credit） */
@@ -196,6 +230,16 @@ export interface HistoryInsights {
 export type RouteStrategy = 'highway' | 'national' | 'balanced';
 
 /** 路线环境全景（P4，对应后端 RouteEnvironmentResult） */
+/** 高速 vs 国道 对比（对应后端 RouteCompareResult） */
+export interface RouteCompare {
+  from: string;
+  to: string;
+  highway: { plan: { distanceKm: number; durationMin: number; toll: number; real: boolean }; fuel: number; totalCost: number };
+  national: { plan: { distanceKm: number; durationMin: number; toll: number; real: boolean }; fuel: number; totalCost: number };
+  cheaper: 'highway' | 'national';
+  real: boolean;
+}
+
 export interface RouteEnvironment {
   from: string;
   to: string;
@@ -222,6 +266,8 @@ export interface DriverAccount {
   id: string;
   name: string;
   createdAt: number;
+  /** 角色（P1D）：driver 司机 / ops 运营 / shipper 货主 / customer 客户 */
+  role?: string;
 }
 
 /** 司机列表响应 */

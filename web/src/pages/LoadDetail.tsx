@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import type { ScoredCargoView } from '../api/types';
+import type { CargoFeedback, ScoredCargoView } from '../api/types';
 import { ErrorState, Loading, ScoreRing } from '../components/ui';
 import { fmtMoney, fmtNum, fmtPerKm } from '../utils/format';
 
@@ -25,6 +25,12 @@ export default function LoadDetail() {
   const [explainLoading, setExplainLoading] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [accepted, setAccepted] = useState<string | null>(null);
+  const [fee, setFee] = useState<{ balance: number; amount: number } | null>(null);
+  const [feedbacks, setFeedbacks] = useState<CargoFeedback[]>([]);
+  const [fbWait, setFbWait] = useState<'lt1' | '1to3' | '3to6' | 'gt6' | ''>('');
+  const [fbDiff, setFbDiff] = useState<'easy' | 'medium' | 'hard' | ''>('');
+  const [fbTips, setFbTips] = useState('');
+  const [fbSubmitting, setFbSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const load = () => {
@@ -58,6 +64,67 @@ export default function LoadDetail() {
       alert(`接单失败：${(e as Error).message}`);
     } finally {
       setAccepting(false);
+    }
+  };
+
+  // P1：加载服务费余额（虚拟额度）
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.getServiceFeeBalance();
+        setFee({ balance: r.balance, amount: r.amount });
+      } catch {
+        /* 忽略：演示环境可取不到则隐藏 */
+      }
+    })();
+  }, []);
+
+  const recharge = async () => {
+    try {
+      const r = await api.rechargeServiceFee();
+      setFee({ balance: r.balance, amount: r.amount });
+    } catch (e) {
+      alert(`充值失败：${(e as Error).message}`);
+    }
+  };
+
+  // P1：加载卡友反馈
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      try {
+        setFeedbacks(await api.listCargoFeedback(id));
+      } catch {
+        /* 忽略 */
+      }
+    })();
+  }, [id]);
+
+  const submitFeedback = async () => {
+    if (!id) return;
+    if (!fbDiff) {
+      alert('请选择装卸难易');
+      return;
+    }
+    const waitMap = { lt1: 0.5, '1to3': 2, '3to6': 4, gt6: 6 } as Record<string, number>;
+    setFbSubmitting(true);
+    try {
+      await api.submitCargoFeedback(id, {
+        loadWaitHours: fbWait ? waitMap[fbWait] : null,
+        loadDifficulty: fbDiff,
+        unloadDifficulty: null,
+        entranceTips: fbTips,
+        parkingTips: '',
+        comment: '',
+      });
+      setFeedbacks(await api.listCargoFeedback(id));
+      setFbWait('');
+      setFbDiff('');
+      setFbTips('');
+    } catch (e) {
+      alert(`提交失败：${(e as Error).message}`);
+    } finally {
+      setFbSubmitting(false);
     }
   };
 
@@ -131,7 +198,7 @@ export default function LoadDetail() {
       <div className="card" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <ScoreRing score={score.total} size={64} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800 }}>AI 综合评分 {score.total} 分</div>
+          <div style={{ fontWeight: 800 }}>综合评分 {score.total} 分</div>
           <div style={{ fontSize: 11.5, color: '#8a8a90', marginTop: 4, lineHeight: 1.6 }}>
             收益 {score.income} · 路线 {score.route} · 回程 {score.backhaul} · 车型 {score.vehicle} · 时间 {score.time}
             {state.item.isBackhaul && <span className="tag tag-orange" style={{ marginLeft: 6 }}>🔄 回程</span>}
@@ -139,18 +206,107 @@ export default function LoadDetail() {
         </div>
       </div>
 
+      {/* P1 货源可信度 */}
+      {state.item.credibility && (
+        <div className="card" style={{ borderColor: 'rgba(22,163,74,.25)' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontWeight: 800 }}>🛡️ 货源可信度</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: state.item.credibility.level === 'high' ? '#16a34a' : state.item.credibility.level === 'mid' ? '#d97706' : '#dc2626' }}>
+              {state.item.credibility.score}
+            </span>
+            <span style={{ fontSize: 12, color: '#8a8a90' }}>分</span>
+            <span className="tag" style={{
+              marginLeft: 'auto',
+              background: state.item.credibility.level === 'high' ? 'rgba(22,163,74,.12)' : state.item.credibility.level === 'mid' ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
+              color: state.item.credibility.level === 'high' ? '#16a34a' : state.item.credibility.level === 'mid' ? '#d97706' : '#dc2626',
+              borderColor: state.item.credibility.level === 'high' ? 'rgba(22,163,74,.3)' : state.item.credibility.level === 'mid' ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)',
+            }}>
+              {state.item.credibility.level === 'high' ? '信任度较高' : state.item.credibility.level === 'mid' ? '信任度一般' : '信任度较低'}
+            </span>
+          </div>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {state.item.credibility.evidence.map((e, i) => (
+              <div key={i} style={{ fontSize: 12.5, color: '#4b5563', lineHeight: 1.6 }}>{e}</div>
+            ))}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 11, color: '#8a8a90' }}>
+            ⚠ 可信度=证据支持度，非真实性保证；以平台核实为准
+          </div>
+        </div>
+      )}
+
       {explain === null ? (
         <div style={{ margin: '0 12px 14px' }}>
           <button className="btn-p" onClick={showExplain} disabled={explainLoading}>
-            {explainLoading ? 'AI 思考中…' : '🤖 为什么推荐？'}
+            {explainLoading ? '分析中…' : '为什么推荐这单？'}
           </button>
         </div>
       ) : (
         <div className="card" style={{ borderColor: 'rgba(249,115,22,.4)', background: 'rgba(249,115,22,.04)' }}>
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>🤖 AI 推荐理由</div>
+          <div style={{ fontWeight: 800, marginBottom: 6 }}>为什么推荐</div>
           <div style={{ fontSize: 13.5, lineHeight: 1.8, color: '#374151' }}>{explain}</div>
         </div>
       )}
+
+      {/* P1 卡友反馈（结构化） */}
+      <div className="card">
+        <div style={{ fontWeight: 800, marginBottom: 6 }}>👥 卡友反馈</div>
+        {feedbacks.length === 0 ? (
+          <div style={{ fontSize: 12, color: '#8a8a90' }}>暂无卡友反馈，等你来第一条</div>
+        ) : (
+          feedbacks.map(f => (
+            <div key={f.id} style={{ padding: '6px 0', borderBottom: '1px solid rgba(128,128,128,.08)' }}>
+              <div style={{ fontSize: 12.5 }}>
+                ⏱ 等 {f.loadWaitHours ?? '—'}h
+                {f.loadDifficulty && <span> · 装货 {f.loadDifficulty}</span>}
+                {f.unloadDifficulty && <span> · 卸货 {f.unloadDifficulty}</span>}
+              </div>
+              {(f.entranceTips || f.parkingTips) && (
+                <div style={{ fontSize: 11.5, color: '#6b6b6f', marginTop: 2 }}>
+                  {f.entranceTips && `🚪 ${f.entranceTips}`}
+                  {f.entranceTips && f.parkingTips && ' · '}
+                  {f.parkingTips && `🅿️ ${f.parkingTips}`}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+        {/* 提交表单 */}
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select value={fbWait} onChange={e => setFbWait(e.target.value as 'lt1' | '1to3' | '3to6' | 'gt6' | '')} style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '1px solid #ddd' }}>
+              <option value="">等待时长?</option>
+              <option value="lt1">&lt;1h</option>
+              <option value="1to3">1-3h</option>
+              <option value="3to6">3-6h</option>
+              <option value="gt6">&gt;6h</option>
+            </select>
+            <select value={fbDiff} onChange={e => setFbDiff(e.target.value as 'easy' | 'medium' | 'hard' | '')} style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '1px solid #ddd' }}>
+              <option value="">装卸难易?</option>
+              <option value="easy">容易</option>
+              <option value="medium">一般</option>
+              <option value="hard">难</option>
+            </select>
+          </div>
+          <input value={fbTips} onChange={e => setFbTips(e.target.value)} placeholder="入口/停车经验（可选）" style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #ddd' }} />
+          <button className="btn-g" onClick={submitFeedback} disabled={fbSubmitting}>
+            {fbSubmitting ? '提交中…' : '提交卡友反馈'}
+          </button>
+        </div>
+      </div>
+
+      {/* P1 平台服务费（虚拟额度，不可提现/转账/兑换） */}
+      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', background: 'rgba(22,163,74,.05)', borderColor: 'rgba(22,163,74,.25)' }}>
+        <span style={{ fontSize: 13 }}>🛡️ 平台服务费</span>
+        <span style={{ flex: 1, fontSize: 12.5, color: '#4b5563' }}>
+          承运需支付约 {fee ? fee.amount : 200} 元（当前虚拟额度 {fee ? fee.balance : '—'} 元）
+        </span>
+        {fee && fee.balance < fee.amount && (
+          <button className="btn-g" style={{ fontSize: 12, padding: '4px 10px' }} onClick={recharge}>
+            💳 充值演示
+          </button>
+        )}
+      </div>
 
       {/* 操作 */}
       <div className="row-actions">
@@ -181,6 +337,7 @@ function RouteEnvBlock({ from, to }: { from: string; to: string }) {
   const [env, setEnv] = useState<import('../api/types').RouteEnvironment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [comp, setComp] = useState<import('../api/types').RouteCompare | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -201,6 +358,22 @@ function RouteEnvBlock({ from, to }: { from: string; to: string }) {
       alive = false;
     };
   }, [from, to, strategy]);
+
+  // P：高速 vs 国道 对比
+  useEffect(() => {
+    let alive = true;
+    api
+      .getRouteCompare(from, to)
+      .then(r => {
+        if (alive) setComp(r);
+      })
+      .catch(() => {
+        if (alive) setComp(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [from, to]);
 
   // P5：策略选择即记住（写偏好，下次大厅/AI 计算默认用它）
   const chooseStrategy = (s: 'highway' | 'balanced' | 'national') => {
@@ -256,6 +429,31 @@ function RouteEnvBlock({ from, to }: { from: string; to: string }) {
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{fmtMoney(env.plan.toll)}</div>
               </div>
             </div>
+
+            {/* 高速 vs 国道 对比 */}
+            {comp && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 6 }}>🛣 高速还是国道（按你车算）</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { key: 'highway', label: '高速', plan: comp.highway, cheap: comp.cheaper === 'highway' },
+                    { key: 'national', label: '国道', plan: comp.national, cheap: comp.cheaper === 'national' },
+                  ].map(o => (
+                    <div key={o.key} style={{ border: o.cheap ? '1.5px solid #c2410c' : '1px solid rgba(128,128,128,.18)', borderRadius: 10, padding: '9px 10px', background: o.cheap ? 'rgba(194,65,12,.05)' : '#f6f7f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 800, fontSize: 13 }}>{o.label}</span>
+                        {o.cheap && <span style={{ fontSize: 10.5, color: '#c2410c', fontWeight: 700 }}>更划算</span>}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b6b6f', marginTop: 5, lineHeight: 1.6 }}>⏱ {Math.round(o.plan.plan.durationMin / 60)}h{o.plan.plan.durationMin % 60}m</div>
+                      <div style={{ fontSize: 12, color: '#6b6b6f', lineHeight: 1.6 }}>🛣 过路费 {fmtMoney(o.plan.plan.toll)}</div>
+                      <div style={{ fontSize: 12, color: '#6b6b6f', lineHeight: 1.6 }}>⛽ 油费 {fmtMoney(o.plan.fuel)}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 4, color: o.key === 'highway' ? '#c2410c' : '#16a34a' }}>合计 {fmtMoney(o.plan.totalCost)} 元</div>
+                    </div>
+                  ))}
+                </div>
+                {!comp.real && <div style={{ fontSize: 11, color: '#8a8a90', marginTop: 5 }}>演示数据（配置高德 Key 后为真实路线）</div>}
+              </div>
+            )}
 
             {/* 天气与影响 */}
             <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'rgba(22,163,74,.05)', border: '1px solid rgba(22,163,74,.2)' }}>

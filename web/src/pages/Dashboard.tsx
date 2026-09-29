@@ -53,7 +53,7 @@ export default function Dashboard() {
           <div className="logo">🚛</div>
           <div>
             <div className="bname">货运雷达</div>
-            <div className="bsub">AI 帮你判断哪一单值得跑</div>
+            <div className="bsub">帮你判断哪一单值得跑</div>
           </div>
         </div>
       </header>
@@ -79,7 +79,7 @@ export default function Dashboard() {
           border: 'none', color: '#fff', textAlign: 'center', padding: '20px 14px',
         }}
       >
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>🔥 AI 最推荐单 · 预计净收益</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>♨️ 最值得跑的一单 · 预计净收益</div>
         <div style={{ fontSize: 42, fontWeight: 900, color: '#4ade80', margin: '6px 0 2px', letterSpacing: 1 }}>
           {net >= 0 ? '+' : ''}{fmtMoney(net)}
         </div>
@@ -92,11 +92,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* AI 最推荐卡片 */}
+      {/* 最值得跑卡片 */}
       {top ? (
-        <div className="sec-hd">🔥 AI 最推荐</div>
+        <div className="sec-hd">♨️ 最值得跑</div>
       ) : (
-        <div className="sec-hd">🔥 AI 最推荐</div>
+        <div className="sec-hd">♨️ 最值得跑</div>
       )}
       {top ? (
         <div className="card" style={{ position: 'relative' }}>
@@ -232,8 +232,8 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* AI 推荐列表（Top3 精简） */}
-      <div className="sec-hd">AI 推荐 Top 3</div>
+      {/* 推荐列表（Top3 精简） */}
+      <div className="sec-hd">值得跑的货源 Top 3</div>
       <div style={{ margin: '0 12px 20px' }}>
         {d.topLoads.map((item, i) => (
           <div

@@ -62,3 +62,26 @@ export const LOSS_STD: Record<CargoClass, number> = {
   快递: 2,
   其他: 2,
 };
+
+/**
+ * 货源可信度评分权重（合计 100）：
+ *   货主认证 15 · 运营确认 30 · 历史成交 15 · 卡友反馈 15 · 价格合理 15 · 信息完整 10
+ * 注：运营确认/历史成交/卡友反馈在 P1 阶段数据尚缺，返回 0，P2 补齐后接入。
+ */
+export const CREDIBILITY_WEIGHTS = {
+  verified: 15,
+  opsConfirm: 30,
+  history: 15,
+  feedback: 15,
+  price: 15,
+  completeness: 10,
+} as const;
+
+/** 可信度分级阈值（≥80 高 · ≥60 中 · 否则低） */
+export const CREDIBILITY_HIGH = 80;
+export const CREDIBILITY_MID = 60;
+
+/** 更新时效：超过 24h 后，每 24h 扣 2 分，上限扣 10 分 */
+export const RECENCY_FULL_HOURS = 24;
+export const RECENCY_PENALTY_PER_DAY = 2;
+export const RECENCY_PENALTY_MAX = 10;

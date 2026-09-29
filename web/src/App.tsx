@@ -19,7 +19,7 @@ const NAV = [
   { to: '/', label: '首页', ic: '🏠', end: true },
   { to: '/hall', label: '找货', ic: '🚛', end: false },
   { to: '/books', label: '账本', ic: '💰', end: false },
-  { to: '/assistant', label: 'AI助手', ic: '🤖', end: false },
+  { to: '/assistant', label: '问一问', ic: '🔍', end: false },
   { to: '/orders', label: '订单', ic: '📋', end: false },
   { to: '/me', label: '我的', ic: '👤', end: false },
 ];
