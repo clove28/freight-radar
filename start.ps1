@@ -1,8 +1,9 @@
 # 货运雷达 · 一键启动（火山 DeepSeek + 高德 + SQLite）
-# 用法：右键"用 PowerShell 运行"，或命令行  .\start.ps1
+# 用法：在项目根目录右键"用 PowerShell 运行"，或命令行  .\start.ps1
 # 说明：用 node --env-file 读取 .env（key 固化在 .env，不会丢）；AI 助手走火山方舟 DeepSeek
 
-Set-Location "D:\字研班\货车\货运雷达"
+# 自动定位到脚本所在目录（跟随仓库移动，无需改路径）
+Set-Location -Path $PSScriptRoot
 
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host "  🚛 货运雷达 · 启动中" -ForegroundColor Cyan

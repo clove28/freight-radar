@@ -5,3 +5,4 @@ dist/
 # 持久化数据
 data/
 .env
+.trash_backup/
