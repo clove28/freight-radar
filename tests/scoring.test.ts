@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterCargoes,
+  normalizeTopN,
   rankCargoes,
   scoreBackhaul,
   scoreIncome,
@@ -133,5 +134,39 @@ describe('rankCargoes 综合排序', () => {
 
   it('空列表返回空', () => {
     expect(rankCargoes([], vehicle)).toEqual([]);
+  });
+});
+
+describe('normalizeTopN 返回条数归一化', () => {
+  it('缺省与非法值回退默认条数', () => {
+    expect(normalizeTopN(undefined)).toBe(5);
+    expect(normalizeTopN(Number.NaN)).toBe(5);
+    expect(normalizeTopN(0)).toBe(5);
+    expect(normalizeTopN(-3)).toBe(5);
+  });
+
+  it('小数向下取整', () => {
+    expect(normalizeTopN(2.9)).toBe(2);
+  });
+
+  it('超大值截断到上限', () => {
+    expect(normalizeTopN(999)).toBe(50);
+  });
+
+  it('合法值原样返回', () => {
+    expect(normalizeTopN(3)).toBe(3);
+  });
+});
+
+describe('rankCargoes 非法 topN 兜底', () => {
+  it('负数 topN 不再少返回一条', () => {
+    const list = [mk('a', {}), mk('b', {}), mk('c', {})];
+    // 旧行为 slice(0,-1) 只会返回 2 条；现在回退默认条数 → 3 条全部返回
+    expect(rankCargoes(list, vehicle, { topN: -1 }).length).toBe(3);
+  });
+
+  it('小数 topN 向下取整', () => {
+    const list = [mk('a', {}), mk('b', {}), mk('c', {})];
+    expect(rankCargoes(list, vehicle, { topN: 1.9 }).length).toBe(1);
   });
 });

@@ -50,6 +50,8 @@ export const BACKHAUL_NONE_SCORE = 20;
 /** 推荐默认返回条数 */
 export const DEFAULT_TOP_N = 5;
 export const DASHBOARD_TOP_N = 3;
+/** 单次推荐最大返回条数：防 AI/查询参数传入超大 topN 一次性刷屏 */
+export const MAX_TOP_N = 50;
 
 /** 损耗标准（‰）：农产品 5‰、冷藏 10‰、其他 2‰（与演示版一致） */
 export const LOSS_STD: Record<CargoClass, number> = {

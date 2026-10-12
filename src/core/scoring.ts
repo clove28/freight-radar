@@ -11,6 +11,7 @@ import {
   BACKHAUL_NONE_SCORE,
   BACKHAUL_SCORE,
   DEFAULT_TOP_N,
+  MAX_TOP_N,
   PER_KM_BEST,
   PER_KM_WORST,
   ROUTE_EXACT_SCORE,
@@ -126,9 +127,21 @@ export function filterCargoes(cargos: Cargo[], vehicle: Vehicle, q: DriverQuery,
 }
 
 /**
+ * 归一化返回条数：把来自 AI 解析 / 查询参数的"不可信条数"收敛到安全区间。
+ * 非法值（undefined / NaN / 小数 / ≤0）回退默认条数，超大值截断到 MAX_TOP_N，
+ * 避免 slice(0, 负数) 出现"少返回一条"这类反直觉结果。
+ */
+export function normalizeTopN(topN?: number): number {
+  if (topN === undefined || !Number.isFinite(topN)) return DEFAULT_TOP_N;
+  const n = Math.floor(topN);
+  if (n < 1) return DEFAULT_TOP_N;
+  return Math.min(n, MAX_TOP_N);
+}
+
+/**
  * 对一列货源评分并排序（业务代码完成，LLM 不参与）
  * @param costFor 可选：每单成本选项（P3 注入真实空驶里程）
- * @returns 按总分降序的 ScoredCargo 列表
+ * @returns 按总分降序的 ScoredCargo 列表（条数经 normalizeTopN 收敛）
  */
 export function rankCargoes(cargos: Cargo[], vehicle: Vehicle, q: DriverQuery = {}, costFor?: CostOptionsFor): ScoredCargo[] {
   const filtered = filterCargoes(cargos, vehicle, q, costFor);
@@ -144,6 +157,5 @@ export function rankCargoes(cargos: Cargo[], vehicle: Vehicle, q: DriverQuery = 
     } satisfies ScoredCargo;
   });
   scored.sort((a, b) => b.score.total - a.score.total);
-  const topN = q.topN ?? DEFAULT_TOP_N;
-  return scored.slice(0, topN);
+  return scored.slice(0, normalizeTopN(q.topN));
 }
