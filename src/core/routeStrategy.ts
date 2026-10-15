@@ -17,9 +17,30 @@ export const ROUTE_STRATEGIES: Array<{ value: RouteStrategy; label: string; desc
   { value: 'national', label: '🛤️ 国道省费', desc: '免过路费，但慢、油耗高' },
 ];
 
+/**
+ * 兜底策略：与 calcCost 不传 strategy 时的旧行为一致（缺省走高速）。
+ * 仅在运行时遇到非法值时使用，不改变任何合法策略的语义。
+ */
+export const DEFAULT_ROUTE_STRATEGY: RouteStrategy = 'highway';
+
+/**
+ * 把任意来源的策略值收敛为合法枚举。
+ *
+ * 策略不只来自代码里的字面量：它还会从持久化的司机偏好（prefs.preferredStrategy）、
+ * 查询参数与旧版本数据里反序列化出来，运行时可能是任意字符串 / null / 对象。
+ * TypeScript 的联合类型只在编译期生效，挡不住这些值；一旦落到下面的 switch，
+ * 旧写法会走完所有 case 后返回 undefined，把油费/过路费算成 NaN，
+ * 而 NaN 会一路传染到净收益与排序（NaN 比较恒为 false，等于静默乱序）。
+ */
+export function normalizeStrategy(value: unknown): RouteStrategy {
+  return value === 'highway' || value === 'balanced' || value === 'national'
+    ? value
+    : DEFAULT_ROUTE_STRATEGY;
+}
+
 /** 策略 → 高速费系数（相对车辆档案 tollPerKm） */
 export function tollFactor(strategy: RouteStrategy): number {
-  switch (strategy) {
+  switch (normalizeStrategy(strategy)) {
     case 'highway': return 1.0;
     case 'balanced': return 0.6;
     case 'national': return 0;
@@ -28,7 +49,7 @@ export function tollFactor(strategy: RouteStrategy): number {
 
 /** 策略 → 油耗系数（相对车辆档案 fuelPer100km） */
 export function fuelFactor(strategy: RouteStrategy): number {
-  switch (strategy) {
+  switch (normalizeStrategy(strategy)) {
     case 'highway': return 0.95;
     case 'balanced': return 1.05;
     case 'national': return 1.15;
@@ -37,7 +58,7 @@ export function fuelFactor(strategy: RouteStrategy): number {
 
 /** 策略 → 预计时长修正系数（相对 60km/h 基准） */
 export function durationFactor(strategy: RouteStrategy): number {
-  switch (strategy) {
+  switch (normalizeStrategy(strategy)) {
     case 'highway': return 0.75; // 高速更快
     case 'balanced': return 1.0;
     case 'national': return 1.6; // 国道更慢

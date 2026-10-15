@@ -4,7 +4,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import { weatherImpact, gasFuelFactor } from '../src/core/weather.js';
-import { fuelFactor, tollFactor, durationFactor, ROUTE_STRATEGIES } from '../src/core/routeStrategy.js';
+import {
+  fuelFactor, tollFactor, durationFactor, ROUTE_STRATEGIES,
+  normalizeStrategy, DEFAULT_ROUTE_STRATEGY, type RouteStrategy,
+} from '../src/core/routeStrategy.js';
 import { calcCost } from '../src/core/cost.js';
 import { ApiRoutePlanner, MockRoutePlanner } from '../src/core/routePlanner.js';
 import { RouteEnvironmentService } from '../src/server/routeService.js';
@@ -101,6 +104,25 @@ describe('路线策略系数（P4）', () => {
     expect(durationFactor('highway')).toBe(0.75);
     expect(durationFactor('national')).toBe(1.6);
   });
+
+  it('normalizeStrategy：只放行三种合法策略，其余回退高速', () => {
+    expect(normalizeStrategy('highway')).toBe('highway');
+    expect(normalizeStrategy('balanced')).toBe('balanced');
+    expect(normalizeStrategy('national')).toBe('national');
+    for (const bad of ['expressway', 'Highway', '', ' ', '高速', null, undefined, 0, 1, {}] as unknown[]) {
+      expect(normalizeStrategy(bad)).toBe(DEFAULT_ROUTE_STRATEGY);
+    }
+  });
+
+  it('非法策略兜底为高速系数，不再返回 undefined', () => {
+    // 策略可能来自持久化偏好 / 查询参数 / 旧数据，运行时不受联合类型约束
+    const junk = ['expressway', 'Highway', '', null, undefined, 0, {}] as unknown as RouteStrategy[];
+    for (const bad of junk) {
+      expect(tollFactor(bad)).toBe(1.0);
+      expect(fuelFactor(bad)).toBe(0.95);
+      expect(durationFactor(bad)).toBe(0.75);
+    }
+  });
 });
 
 describe('成本修正（策略+天气，P4）', () => {
@@ -130,6 +152,15 @@ describe('成本修正（策略+天气，P4）', () => {
     expect(both.toll).toBe(0);
     // 国道1.15 × 雪天1.12 = 1.288
     expect(both.fuel).toBeCloseTo((1050 / 100) * 32 * 7.2 * 1.288, 0);
+  });
+
+  it('非法策略不会把金额算成 NaN（按高速兜底）', () => {
+    const highway = calcCost(cargo, vehicle, { routeStrategy: 'highway' });
+    const junk = calcCost(cargo, vehicle, { routeStrategy: 'expressway' as RouteStrategy });
+    expect(junk).toEqual(highway);
+    expect(Number.isNaN(junk.totalCost)).toBe(false);
+    expect(Number.isNaN(junk.netIncome)).toBe(false);
+    expect(Number.isNaN(junk.perKm)).toBe(false);
   });
 });
 
