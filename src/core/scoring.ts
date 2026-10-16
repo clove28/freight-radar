@@ -24,7 +24,7 @@ import {
   TRUCK_MISMATCH_SCORE,
 } from './constants.js';
 import { calcCost, canCarry, truckMatches, type CostOptions } from './cost.js';
-import type { Cargo, DriverQuery, ScoredCargo, ScoreBreakdown, Vehicle } from './types.js';
+import type { Cargo, CostEstimate, DriverQuery, ScoredCargo, ScoreBreakdown, Vehicle } from './types.js';
 
 /** 评分/过滤时提供每单成本选项（P3：可注入真实空驶里程） */
 export type CostOptionsFor = (c: Cargo) => CostOptions | undefined;
@@ -81,9 +81,15 @@ export function hoursUntilPickup(pickup: string): number {
   return Math.max(0, diffMs / 3_600_000);
 }
 
-/** 综合评分一单 */
-export function scoreCargo(cargo: Cargo, vehicle: Vehicle, costFor?: CostOptionsFor): ScoreBreakdown {
-  const cost = calcCost(cargo, vehicle, costFor?.(cargo));
+/**
+ * 用「已经算好的成本」评一单（纯函数）。
+ *
+ * 拆出本函数是为了让 `rankCargoes` 复用自己已经算出的成本：
+ * 旧写法在 `rankCargoes` 里先 `calcCost` 一次、再调 `scoreCargo` 又算一次，
+ * 即每单成本被算两遍；而 `costFor` 可能查库或调地图（P3 真实空驶里程），
+ * 重复调用既浪费时间也可能产生不一致结果。
+ */
+export function scoreCargoWithCost(cargo: Cargo, vehicle: Vehicle, cost: CostEstimate): ScoreBreakdown {
   const income = scoreIncome(cost.perKm);
   const route = scoreRoute(cargo, vehicle);
   const backhaul = scoreBackhaul(cargo, vehicle);
@@ -97,6 +103,14 @@ export function scoreCargo(cargo: Cargo, vehicle: Vehicle, costFor?: CostOptions
       time * SCORE_WEIGHTS.time,
   );
   return { income, route, backhaul, vehicle: vehicleS, time, total };
+}
+
+/**
+ * 综合评分一单（自行算成本）
+ * @param costFor 可选：该单的成本选项（P3 注入真实空驶里程），每单调用一次
+ */
+export function scoreCargo(cargo: Cargo, vehicle: Vehicle, costFor?: CostOptionsFor): ScoreBreakdown {
+  return scoreCargoWithCost(cargo, vehicle, calcCost(cargo, vehicle, costFor?.(cargo)));
 }
 
 /** 过滤（业务规则，不含 LLM） */
@@ -146,8 +160,9 @@ export function normalizeTopN(topN?: number): number {
 export function rankCargoes(cargos: Cargo[], vehicle: Vehicle, q: DriverQuery = {}, costFor?: CostOptionsFor): ScoredCargo[] {
   const filtered = filterCargoes(cargos, vehicle, q, costFor);
   const scored = filtered.map(c => {
+    // 成本只算一次：同一个 cost 既作为结果返回，也用于评分（旧写法会重复算一遍）
     const cost = calcCost(c, vehicle, costFor?.(c));
-    const score = scoreCargo(c, vehicle, costFor);
+    const score = scoreCargoWithCost(c, vehicle, cost);
     return {
       cargo: c,
       cost,

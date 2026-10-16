@@ -3,11 +3,14 @@
  * 验证：各分项规则与权重合成、过滤条件、排序。
  */
 import { describe, expect, it } from 'vitest';
+import { calcCost } from '../src/core/cost.js';
 import {
   filterCargoes,
   normalizeTopN,
   rankCargoes,
   scoreBackhaul,
+  scoreCargo,
+  scoreCargoWithCost,
   scoreIncome,
   scoreRoute,
   scoreVehicle,
@@ -168,5 +171,34 @@ describe('rankCargoes 非法 topN 兜底', () => {
   it('小数 topN 向下取整', () => {
     const list = [mk('a', {}), mk('b', {}), mk('c', {})];
     expect(rankCargoes(list, vehicle, { topN: 1.9 }).length).toBe(1);
+  });
+});
+
+describe('rankCargoes 每单成本只算一次（去重）', () => {
+  it('costFor 每单只调用一次', () => {
+    const list = [mk('a', {}), mk('b', { from: '成都', to: '成都' }), mk('c', { to: '太原', km: 800 })];
+    const calls: string[] = [];
+    rankCargoes(list, vehicle, { topN: 5 }, c => {
+      calls.push(c.id);
+      return { emptyKm: 120 };
+    });
+    // 旧写法每单会被调两次（rankCargoes 内 calcCost 一次 + scoreCargo 内再一次），
+    // costFor 接真实空驶里程/地图时等于白打一次外部调用
+    expect(calls.sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('scoreCargoWithCost 与 scoreCargo 结果一致', () => {
+    const c = mk('a', { km: 800 });
+    const opts = { emptyKm: 120, routeStrategy: 'highway' as const };
+    expect(scoreCargoWithCost(c, vehicle, calcCost(c, vehicle, opts))).toEqual(scoreCargo(c, vehicle, () => opts));
+  });
+
+  it('注入的真实空驶里程同时进入返回成本与评分', () => {
+    const c = mk('a', {});
+    const injected = { emptyKm: 0 };
+    const ranked = rankCargoes([c], vehicle, { topN: 1 }, () => injected);
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0]!.cost).toEqual(calcCost(c, vehicle, injected));
+    expect(ranked[0]!.score).toEqual(scoreCargoWithCost(c, vehicle, calcCost(c, vehicle, injected)));
   });
 });
