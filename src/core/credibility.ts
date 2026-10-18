@@ -29,6 +29,8 @@ export interface CredibilityInput {
   completeness?: number;
   /** 货源发布时间戳（ms），用于更新时效 */
   pub?: number;
+  /** 计算基准时间戳（ms），缺省 Date.now()。注入后同输入必得同输出，可做确定性测试 */
+  now?: number;
   // ── 以下 P2 才有，P1 传入则自动生效，缺省按 0 ──
   /** 运营确认过 */
   opsConfirmed?: boolean;
@@ -74,10 +76,17 @@ function feedbackScore(positive: number, negative: number): number {
   return Math.round(w * ratio);
 }
 
-/** 更新时效惩罚（0–10）：超过 24h 后每 24h 扣 2 分，上限 10 */
-function recencyPenalty(pub: number | undefined): number {
-  if (pub === undefined) return 0;
-  const ageH = (Date.now() - pub) / 3_600_000;
+/**
+ * 更新时效惩罚（0–10）：超过 24h 后每 24h 扣 2 分，上限 10
+ *
+ * `now` 显式作为参数：本模块对外号称"纯函数"，旧实现却直接读 `Date.now()`，
+ * 同一条货源在不同时刻会算出不同分数，测试只能做「旧 < 新」这种相对断言。
+ * 注入 `now` 后既能精确断言边界，也保留了调用方不传参时的原有行为。
+ */
+export function recencyPenalty(pub: number | undefined, now: number = Date.now()): number {
+  // 缺省或非有限值（DB 里 NULL/脏数据被解成 NaN）一律不罚，避免 NaN 传染到总分
+  if (pub === undefined || !Number.isFinite(pub) || !Number.isFinite(now)) return 0;
+  const ageH = (now - pub) / 3_600_000;
   if (ageH <= RECENCY_FULL_HOURS) return 0;
   const days = Math.floor((ageH - RECENCY_FULL_HOURS) / 24);
   return Math.min(RECENCY_PENALTY_MAX, days * RECENCY_PENALTY_PER_DAY);
@@ -134,7 +143,7 @@ export function computeCredibility(input: CredibilityInput): CredibilityResult {
   score += Math.round(w.completeness * comp);
 
   // 7. 更新时效（惩罚项）
-  const penalty = recencyPenalty(input.pub);
+  const penalty = recencyPenalty(input.pub, input.now);
   score = Math.max(0, score - penalty);
 
   // 分级
