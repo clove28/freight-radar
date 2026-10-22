@@ -65,12 +65,10 @@ docker run -p 3000:3000 -e AMAP_KEY=xxx -e ARK_API_KEY=xxx -e ARK_MODEL=deepseek
 
 ### 部署上线（公网 / 局域网）
 
-- ✅ **公网上线（阿里云）一键执行清单**：见 `deploy\公网上线执行清单.md`（从传代码到 HTTPS 全串好）
+- 🌐 **公网上线指南（阿里云）**：见 `deploy\阿里云部署步骤.md`（买服务器 → 一键脚本 → 验证；用 IP:3000 直连，免域名免备案）
 - 🏠 **局域网先给老爸用（零成本）**：见 `deploy\局域网使用方案.md`（同 WiFi 手机访问）
-- 🌐 **公网完整指南**：见 `deploy\阿里云部署步骤.md`（购买/备案/排障）
 - ⚠️ 免责声明：`deploy\免责声明.txt`（上线必备）
 - 一键启动（含火山/高德/SQLite 全部 key，读 `.env`）：`start.ps1`
-- 上线检查清单：`deploy\CHECKLIST.md`
 
 ### 前端（P1 移动端产品层）
 
@@ -270,7 +268,7 @@ npm test
 - [x] **P6 持久化升级与账号**：SQLite 仓储（Node 内置 node:sqlite，PERSIST=sqlite，并发安全+按司机隔离）+ 多司机账号（创建/切换，车辆/偏好独立，前端"我的"页管理）+ SSE 实时推送（匹配回程/常跑货源即时提醒）+ 行情数据源抽象（QuoteProvider 接口，未来可换真实行情 API）
 - [x] **P7 登录与实时通道**：司机登录鉴权（scrypt 密码哈希+盐+恒时比较，token 会话存 SQLite，注册/登录/登出/me API，前端登录页+免登录演示入口）+ WebSocket 双向推送（/api/ws，客户端可订阅过滤如"只收回程"，与 SSE 并存）+ 行情指数 API（/api/quote）
 - [x] **P8 账号安全与多端同步**：会话 TTL（7 天过期）+ 手机号验证码登录（演示环境返回 devCode，生产接短信服务商）+ 鉴权中间件（AUTH_REQUIRED=1 开启，白名单放行 auth/health/events，其余需 Bearer token，前端自动附带）+ 多端同步 API（订单/信用/记账上传下载）+ 微信小程序云同步页（登录+上传/下载）+ Nginx/TLS 部署示例
-- [x] **P9 登录体验与安全**：扫码登录（状态机 pending→approved→expired，TTL 120s，前端二维码+轮询+模拟手机确认，预留真实微信接入）+ 短信限流（60s/次、每小时 5 次，429 响应）+ 启动会话/验证码清理 + 请求日志（LOG_REQUESTS=1）+ 上线检查清单（deploy/CHECKLIST.md）
+- [x] **P9 登录体验与安全**：扫码登录（状态机 pending→approved→expired，TTL 120s，前端二维码+轮询+模拟手机确认，预留真实微信接入）+ 短信限流（60s/次、每小时 5 次，429 响应）+ 启动会话/验证码清理 + 请求日志（LOG_REQUESTS=1）+ 上线检查清单
 - [x] **P10 数据可视化与安全**：统计模块（月度收益趋势/线路分布/每公里均值，`/api/stats`）+ Dashboard 收益柱状图与线路条形图（纯 CSS 零依赖）+ 登录失败锁定（连续 5 次锁 10 分钟，423 响应）+ 密码强度（≥6 位含数字）+ 演示真实货源 API（`examples/mock-cargo-api.mjs`，CARGO_SOURCE=api 全链路验证含故障注入）
 - [x] **P11 数据精确与对账**：记账 km 里程字段（BookEntry 可选 km，统计/每公里收益优先真实值，兜底估算）+ 收益报表 CSV 导出（`/api/export/books.csv`，Excel 兼容 BOM，Dashboard 一键下载）+ 短信服务商 Provider 抽象（DevSmsProvider 演示 / AliyunSmsProvider 骨架，SMS_PROVIDER 切换）+ 行情 API Provider 骨架（QUOTE_API_URL 切换）+ docker-compose 一键部署（含安全/高德/短信/行情环境变量）
 - [x] **P12 收益账本页**：前端账本页（月度汇总 + 记一笔表单含 km + 明细列表 + km 补录 + 删除，底部导航新增"账本"）+ 记账 CRUD API（PATCH/DELETE）+ CSV 加每公里收益列
