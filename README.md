@@ -22,7 +22,8 @@
 
 - **语言**：TypeScript（严格模式，类型安全）
 - **后端**：Node.js + Express（纯业务逻辑，无 ORM 依赖）
-- **测试**：Vitest（51 个用例，覆盖成本计算/评分/过滤/AI 编排/API）
+- **测试**：Vitest（`npm test` 24 个测试文件 / 237 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
+  数字以 `npm test` 实际输出为准）
 - **运行**：tsx（开发热重载）；`npm run build` 可产出纯 JS
 
 ## 三、快速开始
@@ -175,7 +176,7 @@ curl -X POST http://localhost:3000/api/assistant \
 │   │   ├── utils/format.ts #   纯展示格式化
 │   │   └── App.tsx         #   路由 + 底部导航
 │   └── vite.config.ts      #   开发代理 /api → :3000
-└── tests/                  # Vitest 单元/集成测试（57 用例）
+└── tests/                  # Vitest 单元/集成测试（文件清单见「八、测试」）
 ```
 
 ## 五、核心业务逻辑
@@ -238,6 +239,8 @@ curl -X POST http://localhost:3000/api/assistant \
 npm test
 ```
 
+> 下表由 `tests/docs.test.ts` 校验：新增测试文件必须在此登记，否则 `npm test` 会失败。
+
 | 文件 | 覆盖 |
 | --- | --- |
 | `tests/cost.test.ts` | 成本公式、载重约束、车型匹配 |
@@ -246,6 +249,9 @@ npm test
 | `tests/api.test.ts` | 全部路由、错误处理（400/404/500） |
 | `tests/order.test.ts` | 订单/证据链/损耗公式/证据包/价格异常 |
 | `tests/order-api.test.ts` | 接单闭环、底线过滤、Dashboard 同步 |
+| `tests/cargoFeedback.test.ts` | 货源反馈核心判定、Mock 仓储 |
+| `tests/credibility.test.ts` | 货源完整度、可信度评分、时效惩罚（注入 `now`） |
+| `tests/serviceFee.test.ts` | 服务费核心纯函数、虚拟服务额度 |
 | `tests/p3.test.ts` | 货主信用规则、历史画像、空驶规划、真实 API 仓储（超时/异常/空数据） |
 | `tests/p4.test.ts` | 天气影响规则、路线策略系数、成本修正、高德回退 |
 | `tests/p5.test.ts` | JSON 文件持久化、行情价格异常、中途天气 |
@@ -254,7 +260,13 @@ npm test
 | `tests/p8.test.ts` | 会话 TTL、手机号/验证码规则 |
 | `tests/p9.test.ts` | 扫码登录状态机、短信限流窗口 |
 | `tests/p10.test.ts` | 统计模块（月度/线路）、登录锁定、密码强度 |
+| `tests/p11.test.ts` | 账本里程、CSV 导出、Provider 抽象 |
+| `tests/p12.test.ts` | CSV 每公里收益列 |
+| `tests/p13.test.ts` | 月度汇总字段 |
 | `tests/p14.test.ts` | 火山方舟 LLM：JSON 解析容错、字段白名单、失败回退规则引擎 |
+| `tests/p15.test.ts` | HTML 报表、分页切片逻辑 |
+| `tests/p16.test.ts` | 货主信用排序 |
+| `tests/docs.test.ts` | README 测试清单与 `tests/` 目录一致性（防文档漂移） |
 | `tests/sqlite.integration.mjs` | SQLite 能力集成测试（`npm run test:sqlite`，Node 原生 runner） |
 
 ## 九、状态与路线图
