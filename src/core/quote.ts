@@ -43,10 +43,13 @@ export function kmAdjust(km: number): number {
 export function quoteFor(cls: CargoClass, km: number): QuoteRange {
   const base = CLASS_BASE[cls] ?? CLASS_BASE.其他;
   const adj = kmAdjust(km);
+  // 先各算一次，返回值与 note 共用同一份四舍五入结果，避免两处各算一遍后走样
+  const low = Math.round(base.low * adj * 10) / 10;
+  const high = Math.round(base.high * adj * 10) / 10;
   return {
-    low: Math.round(base.low * adj * 10) / 10,
-    high: Math.round(base.high * adj * 10) / 10,
-    note: `${cls} ${km}km 参考区间 ${Math.round(base.low * adj * 10) / 10}–${Math.round(base.high * adj * 10) / 10} 元/km`,
+    low,
+    high,
+    note: `${cls} ${km}km 参考区间 ${low}–${high} 元/km`,
   };
 }
 

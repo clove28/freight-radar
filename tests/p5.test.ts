@@ -11,7 +11,7 @@ import { quoteFor, priceFlagByQuote, kmAdjust } from '../src/core/quote.js';
 import { RouteEnvironmentService } from '../src/server/routeService.js';
 import { AmapClient } from '../src/data/amap.js';
 import { createOrder } from '../src/core/order.js';
-import type { Cargo } from '../src/core/types.js';
+import type { Cargo, CargoClass } from '../src/core/types.js';
 
 /** 每个用例独立的临时目录 */
 function tmpDir(): string {
@@ -97,6 +97,27 @@ describe('行情价格异常（P5）', () => {
     expect(kmAdjust(500)).toBe(1.1);
     expect(kmAdjust(1000)).toBe(1.0);
     expect(kmAdjust(2000)).toBe(0.9);
+  });
+
+  it('note 与返回值共用同一份四舍五入结果', () => {
+    const classes: CargoClass[] = ['农产品', '冷藏', '建材', '重货', '普货', '危化', '快递', '其他'];
+    // 覆盖 kmAdjust 的每一档边界（0 / 短途 / 中途 / 长途分界）
+    for (const cls of classes) {
+      for (const km of [0, 100, 300, 500, 600, 1200, 2000]) {
+        const q = quoteFor(cls, km);
+        // note 里的两个数字必须与 low / high 完全一致，而不是各算一遍
+        expect(q.note).toContain(`参考区间 ${q.low}–${q.high} 元/km`);
+        // 保留一位小数（再次四舍五入应等于原值）
+        expect(Math.round(q.low * 10) / 10).toBe(q.low);
+        expect(Math.round(q.high * 10) / 10).toBe(q.high);
+        expect(q.high).toBeGreaterThan(q.low);
+      }
+    }
+  });
+
+  it('普货 500km 精确为 6.1–9.9 元/km', () => {
+    expect(quoteFor('普货', 500)).toMatchObject({ low: 6.1, high: 9.9 });
+    expect(quoteFor('普货', 500).note).toContain('6.1–9.9 元/km');
   });
 
   it('冷藏比普货贵', () => {
