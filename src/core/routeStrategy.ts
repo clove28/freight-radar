@@ -24,6 +24,16 @@ export const ROUTE_STRATEGIES: Array<{ value: RouteStrategy; label: string; desc
 export const DEFAULT_ROUTE_STRATEGY: RouteStrategy = 'highway';
 
 /**
+ * 判断任意值时是否为合法路线策略（类型守卫）。
+ *
+ * 合法值只由 ROUTE_STRATEGIES 定义：服务端校验查询参数、持久化偏好时都复用它，
+ * 新增策略只需改这一处，避免三份内联数组各自漏改。
+ */
+export function isRouteStrategy(value: unknown): value is RouteStrategy {
+  return ROUTE_STRATEGIES.some(s => s.value === value);
+}
+
+/**
  * 把任意来源的策略值收敛为合法枚举。
  *
  * 策略不只来自代码里的字面量：它还会从持久化的司机偏好（prefs.preferredStrategy）、
@@ -33,9 +43,7 @@ export const DEFAULT_ROUTE_STRATEGY: RouteStrategy = 'highway';
  * 而 NaN 会一路传染到净收益与排序（NaN 比较恒为 false，等于静默乱序）。
  */
 export function normalizeStrategy(value: unknown): RouteStrategy {
-  return value === 'highway' || value === 'balanced' || value === 'national'
-    ? value
-    : DEFAULT_ROUTE_STRATEGY;
+  return isRouteStrategy(value) ? value : DEFAULT_ROUTE_STRATEGY;
 }
 
 /** 策略 → 高速费系数（相对车辆档案 tollPerKm） */

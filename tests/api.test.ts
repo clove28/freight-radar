@@ -164,4 +164,55 @@ describe('货运雷达 API', () => {
     expect(body.truck).toBe('13米高栏');
     expect(body.homeCities).toContain('临汾');
   });
+
+  it('PUT /api/prefs 策略：合法值保存、非法值沿用旧值、null 清空', async () => {
+    const put = async (value: unknown) => {
+      const res = await fetch(`${base}/api/prefs`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferredStrategy: value }),
+      });
+      return { status: res.status, body: (await res.json()) as { preferredStrategy: string | null } };
+    };
+
+    const saved = await put('national');
+    expect(saved.status).toBe(200);
+    expect(saved.body.preferredStrategy).toBe('national');
+
+    // 非法字符串 / 非字符串都不能覆盖已保存的合法值（语义：沿用旧值，而非回退 highway）
+    const badString = await put('expressway');
+    expect(badString.status).toBe(200);
+    expect(badString.body.preferredStrategy).toBe('national');
+
+    const badType = await put(123);
+    expect(badType.body.preferredStrategy).toBe('national');
+
+    const cleared = await put(null);
+    expect(cleared.body.preferredStrategy).toBeNull();
+  });
+
+  it('GET /api/route/environment 非法策略回退高速，合法策略透传', async () => {
+    // 显式传空 env：确保走 Mock 路线，不依赖本机 .env / 外网
+    const isolated = createApp(undefined, {});
+    const srv = isolated.listen(0);
+    await new Promise<void>(resolve => srv.once('listening', resolve));
+    try {
+      const addr = srv.address();
+      const port = typeof addr === 'object' && addr ? addr.port : 0;
+      const baseUrl = `http://127.0.0.1:${port}`;
+
+      const bad = await getJson<{ strategy: string }>(
+        `${baseUrl}/api/route/environment?${new URLSearchParams({ from: '广州', to: '武汉', strategy: 'expressway' })}`,
+      );
+      expect(bad.status).toBe(200);
+      expect(bad.body.strategy).toBe('highway');
+
+      const good = await getJson<{ strategy: string }>(
+        `${baseUrl}/api/route/environment?${new URLSearchParams({ from: '广州', to: '武汉', strategy: 'national' })}`,
+      );
+      expect(good.body.strategy).toBe('national');
+    } finally {
+      srv.close();
+    }
+  });
 });

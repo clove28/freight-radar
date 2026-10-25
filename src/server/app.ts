@@ -22,7 +22,7 @@ import { RouteEnvironmentService } from './routeService.js';
 import { createAppServices, type AppServices, type LoadSort } from './services.js';
 import type { Vehicle } from '../core/types.js';
 import type { RatingLevel } from '../core/credit.js';
-import type { RouteStrategy } from '../core/routeStrategy.js';
+import { DEFAULT_ROUTE_STRATEGY, isRouteStrategy, type RouteStrategy } from '../core/routeStrategy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** 前端构建产物目录（web/dist），存在则托管 */
@@ -315,7 +315,7 @@ export function createApp(
         preferredStrategy:
           strategy === undefined || strategy === null
             ? (strategy === null ? null : current.preferredStrategy)
-            : ['highway', 'national', 'balanced'].includes(strategy)
+            : isRouteStrategy(strategy)
               ? strategy
               : current.preferredStrategy,
       };
@@ -680,10 +680,10 @@ export function createApp(
     try {
       const from = String(req.query.from ?? '');
       const to = String(req.query.to ?? '');
-      const strategyRaw = String(req.query.strategy ?? 'highway');
-      const strategy: RouteStrategy = ['highway', 'national', 'balanced'].includes(strategyRaw)
-        ? (strategyRaw as RouteStrategy)
-        : 'highway';
+      const strategyRaw = String(req.query.strategy ?? DEFAULT_ROUTE_STRATEGY);
+      const strategy: RouteStrategy = isRouteStrategy(strategyRaw)
+        ? strategyRaw
+        : DEFAULT_ROUTE_STRATEGY;
       if (!from || !to) {
         res.status(400).json({ error: '缺少 from/to' });
         return;

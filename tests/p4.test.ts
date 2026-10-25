@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { weatherImpact, gasFuelFactor } from '../src/core/weather.js';
 import {
   fuelFactor, tollFactor, durationFactor, ROUTE_STRATEGIES,
-  normalizeStrategy, DEFAULT_ROUTE_STRATEGY, type RouteStrategy,
+  normalizeStrategy, isRouteStrategy, DEFAULT_ROUTE_STRATEGY, type RouteStrategy,
 } from '../src/core/routeStrategy.js';
 import { calcCost } from '../src/core/cost.js';
 import { ApiRoutePlanner, MockRoutePlanner } from '../src/core/routePlanner.js';
@@ -110,6 +110,17 @@ describe('路线策略系数（P4）', () => {
     expect(normalizeStrategy('balanced')).toBe('balanced');
     expect(normalizeStrategy('national')).toBe('national');
     for (const bad of ['expressway', 'Highway', '', ' ', '高速', null, undefined, 0, 1, {}] as unknown[]) {
+      expect(normalizeStrategy(bad)).toBe(DEFAULT_ROUTE_STRATEGY);
+    }
+  });
+
+  it('isRouteStrategy：合法值只由 ROUTE_STRATEGIES 决定，与 normalizeStrategy 一致', () => {
+    for (const s of ROUTE_STRATEGIES) {
+      expect(isRouteStrategy(s.value)).toBe(true);
+      expect(normalizeStrategy(s.value)).toBe(s.value);
+    }
+    for (const bad of ['expressway', 'Highway', '', ' ', '高速', null, undefined, 0, 1, {}, []] as unknown[]) {
+      expect(isRouteStrategy(bad)).toBe(false);
       expect(normalizeStrategy(bad)).toBe(DEFAULT_ROUTE_STRATEGY);
     }
   });
