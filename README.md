@@ -4,6 +4,14 @@
 
 > 核心闭环：找货 → 算成本 → 算净收益 → 算每公里收益 → 综合评分 → AI 推荐 → 找回程货 → 记录结果 → 形成历史 → 个性化推荐
 
+## 界面预览
+
+| 首页 · 今天最值得跑的一单 | 货源大厅 · 成本 / 净收益 / 评分 | 问一问 · 一句话找货 |
+| --- | --- | --- |
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/hall.png) | ![](docs/screenshots/assistant.png) |
+
+> 截图取自真实运行实例（DeepSeek 官方 API + 高德真实路线），按手机尺寸 390×900 截取。
+
 ---
 
 ## 一、项目定位
@@ -22,7 +30,7 @@
 
 - **语言**：TypeScript（严格模式，类型安全）
 - **后端**：Node.js + Express（纯业务逻辑，无 ORM 依赖）
-- **测试**：Vitest（`npm test` 24 个测试文件 / 240 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
+- **测试**：Vitest（`npm test` 24 个测试文件 / 250 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
   数字以 `npm test` 实际输出为准）
 - **运行**：tsx（开发热重载）；`npm run build` 可产出纯 JS
 
