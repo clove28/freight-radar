@@ -1,7 +1,9 @@
 @echo off
-chcp 65001 >nul
-title 货运雷达 - 公网演示（临时链接）
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start-public.ps1"
+rem Keep this file ASCII-only. cmd.exe parses batch files in the OEM codepage,
+rem and non-ASCII bytes here break the following lines: verified that Chinese
+rem text truncated the powershell argument list into "'tionPolicy' is not
+rem recognized". All Chinese output lives in start-public.ps1 (UTF-8 with BOM).
+cd /d "%~dp0"
+powershell -NoProfile -ExecutionPolicy Bypass -File "start-public.ps1"
 echo.
-echo 脚本已结束，按任意键关闭窗口...
-pause >nul
+pause
