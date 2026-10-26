@@ -10,7 +10,7 @@
  */
 import type { LlmPort } from './llm.js';
 import { ArkLlm } from './arkLlm.js';
-import { DeepSeekLlm } from './deepseekLlm.js';
+import { DeepSeekLlm, DEEPSEEK_DEFAULT_MODEL } from './deepseekLlm.js';
 import { RuleBasedLlm } from './ruleLlm.js';
 
 /** 当前生效的 AI 引擎类型（启动日志 / 前端展示用） */
@@ -27,7 +27,7 @@ export function pickProvider(env: Record<string, string | undefined> = process.e
 export function describeProvider(env: Record<string, string | undefined> = process.env): { provider: LlmProvider; label: string; model: string } {
   const provider = pickProvider(env);
   if (provider === 'deepseek') {
-    return { provider, label: 'DeepSeek 官方', model: env.DEEPSEEK_MODEL ?? 'deepseek-chat' };
+    return { provider, label: 'DeepSeek 官方', model: env.DEEPSEEK_MODEL ?? DEEPSEEK_DEFAULT_MODEL };
   }
   if (provider === 'ark') {
     return { provider, label: '火山方舟', model: env.ARK_MODEL ?? 'deepseek-v3' };

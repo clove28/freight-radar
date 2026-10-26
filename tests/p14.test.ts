@@ -99,7 +99,7 @@ describe('DeepSeek 官方 API（替代火山方舟）', () => {
     const llm = createLlm({ DEEPSEEK_API_KEY: 'sk-test' }) as DeepSeekLlm;
     expect(llm).toBeInstanceOf(DeepSeekLlm);
     expect(llm['baseUrl']).toBe('https://api.deepseek.com');
-    expect(llm['model']).toBe('deepseek-chat');
+    expect(llm['model']).toBe('deepseek-flash');
   });
 
   it('两个 key 同时存在时 DeepSeek 优先于火山', () => {
@@ -140,7 +140,7 @@ describe('DeepSeek 官方 API（替代火山方舟）', () => {
     expect(describeProvider({ DEEPSEEK_API_KEY: 'sk-test' })).toEqual({
       provider: 'deepseek',
       label: 'DeepSeek 官方',
-      model: 'deepseek-chat',
+      model: 'deepseek-flash',
     });
     expect(describeProvider({ ARK_API_KEY: 'ark-x' }).provider).toBe('ark');
     expect(describeProvider({}).provider).toBe('rule');

@@ -30,7 +30,7 @@
 
 - **语言**：TypeScript（严格模式，类型安全）
 - **后端**：Node.js + Express（纯业务逻辑，无 ORM 依赖）
-- **测试**：Vitest（`npm test` 24 个测试文件 / 250 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
+- **测试**：Vitest（`npm test` 25 个测试文件 / 258 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
   数字以 `npm test` 实际输出为准）
 - **运行**：tsx（开发热重载）；`npm run build` 可产出纯 JS
 
@@ -59,7 +59,7 @@ AMAP_KEY=你的key PERSIST=1 npm run dev
 **真实大模型（DeepSeek 官方 API）**：AI 助手用真实大模型解析需求 + 生成推荐解释（金额/评分仍由后端确定性计算，LLM 不参与）：
 ```bash
 export DEEPSEEK_API_KEY="sk-你的key"   # https://platform.deepseek.com/api_keys
-export DEEPSEEK_MODEL="deepseek-chat"  # 要推理链可换 deepseek-reasoner
+export DEEPSEEK_MODEL="deepseek-flash"  # 要更强推理可换 deepseek-v4-pro
 PERSIST=1 npm run dev
 ```
 > 直连 `https://api.deepseek.com`，不经过火山方舟等中间层，key 和账单都在 DeepSeek 平台自己手里。不配 key 时自动回退规则引擎，功能完整、0 消耗。
@@ -278,6 +278,7 @@ npm test
 | `tests/p15.test.ts` | HTML 报表、分页切片逻辑 |
 | `tests/p16.test.ts` | 货主信用排序 |
 | `tests/docs.test.ts` | README 测试清单与 `tests/` 目录一致性（防文档漂移） |
+| `tests/rate-limit.test.ts` | 演示环境成本闸门：单 IP 每分钟上限、全站每日上限、跨天重置、参数收敛 |
 | `tests/sqlite.integration.mjs` | SQLite 能力集成测试（`npm run test:sqlite`，Node 原生 runner） |
 
 ## 九、状态与路线图

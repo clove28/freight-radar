@@ -16,9 +16,11 @@ import { createFileRepositories } from '../data/fileRepository.js';
 import { DEMO_RECHARGE_AMOUNT, SERVICE_FEE_AMOUNT } from '../core/serviceFee.js';
 import { createCargoRepository } from '../data/apiRepository.js';
 import { createSmsProvider } from '../data/providers.js';
-import { createLlm } from '../ai/selectLlm.js';
+import { createLlm, pickProvider } from '../ai/selectLlm.js';
+import { RuleBasedLlm } from '../ai/ruleLlm.js';
 import { AmapClient } from '../data/amap.js';
 import { RouteEnvironmentService } from './routeService.js';
+import { RateLimiter } from './rateLimit.js';
 import { createAppServices, type AppServices, type LoadSort } from './services.js';
 import type { Vehicle } from '../core/types.js';
 import type { RatingLevel } from '../core/credit.js';
@@ -83,6 +85,19 @@ export function createApp(
     vehicleRepo: reposFinal.vehicle,
   };
   const svc = services ?? createAppServices(reposFinal, assistant);
+
+  // 演示环境的成本闸门：/api/assistant 会真调大模型花钱，链接公开后任何人都能刷。
+  // 只有配了真实 LLM 时才需要（规则引擎不花钱）；命中限额时回退规则引擎，不报错。
+  // 阈值可用环境变量覆盖：ASSISTANT_PER_IP_PER_MIN / ASSISTANT_DAILY_TOTAL。
+  const assistantLimiter = pickProvider(env) === 'rule'
+    ? null
+    : new RateLimiter({
+        perIpPerMinute: Number(env.ASSISTANT_PER_IP_PER_MIN ?? 5),
+        dailyTotal: Number(env.ASSISTANT_DAILY_TOTAL ?? 200),
+      });
+  const svcWhenLimited = assistantLimiter
+    ? createAppServices(reposFinal, { ...assistant, llm: new RuleBasedLlm() })
+    : null;
   // P4：路线环境服务（高德，未配置 AMAP_KEY 时内部回退 Mock）
   const routeService = new RouteEnvironmentService(new AmapClient({ apiKey: env.AMAP_KEY }));
   // P11：短信服务商（演示 DevSmsProvider；生产配置后切真实）
@@ -268,6 +283,17 @@ export function createApp(
       return;
     }
     try {
+      // 演示环境限流：命中后回退规则引擎（功能不断，钱不失控）
+      if (assistantLimiter && svcWhenLimited) {
+        const decision = assistantLimiter.check(req.ip ?? 'unknown');
+        res.setHeader('X-RateLimit-Remaining', String(decision.remainingDaily));
+        if (!decision.allowed) {
+          if (decision.retryAfterSec) res.setHeader('Retry-After', String(decision.retryAfterSec));
+          const fallback = await svcWhenLimited.ask(text);
+          res.json({ ...fallback, limited: true, limitedReason: decision.reason });
+          return;
+        }
+      }
       res.json(await svc.ask(text));
     } catch (e) {
       res.status(500).json({ error: (e as Error).message });

@@ -6,7 +6,7 @@
  *
  * 配置（环境变量，见 .env.example）：
  *  - DEEPSEEK_API_KEY   DeepSeek 官方 API key（必填，形如 sk-xxx）
- *  - DEEPSEEK_MODEL     模型名，默认 deepseek-chat（可选 deepseek-reasoner）
+ *  - DEEPSEEK_MODEL     模型名，默认 deepseek-flash（要更强推理改 deepseek-v4-pro）
  *  - DEEPSEEK_BASE_URL  可选，默认 https://api.deepseek.com
  *
  * 复用 ArkLlm 的 OpenAI 兼容实现：同一份请求/解析/回退逻辑，只换端点与厂商标识。
@@ -16,8 +16,14 @@ import { ArkLlm } from './arkLlm.js';
 
 /** DeepSeek 官方端点（OpenAI 兼容，/chat/completions 在其下） */
 export const DEEPSEEK_DEFAULT_BASE = 'https://api.deepseek.com';
-/** 默认对话模型；需要推理链时改 deepseek-reasoner */
-export const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat';
+/**
+ * 默认对话模型。
+ *
+ * 官方文档（2026-10）当前口径是 `deepseek-flash` 与 `deepseek-v4-pro`；
+ * 旧名 `deepseek-chat` 仍可调用（实际由 V4.1-Flash 提供服务、按 Flash 计费），
+ * 但新配置一律用文档里的名字，避免以后旧名真的下线。
+ */
+export const DEEPSEEK_DEFAULT_MODEL = 'deepseek-flash';
 
 /**
  * 清洗 baseURL：只认 OpenAI 兼容根地址。
