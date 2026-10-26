@@ -1,8 +1,7 @@
 /**
- * 货运雷达 · 火山方舟 LLM 实现（Ark，P14）
+ * 货运雷达 · OpenAI 兼容 LLM 客户端（P14 起用，原火山方舟实现）
  *
- * 用真实大模型（DeepSeek/豆包等，火山方舟 OpenAI 兼容接口）替代规则实现，
- * 只做两件事（与 LlmPort 契约一致）：
+ * 用真实大模型替代规则实现，只做两件事（与 LlmPort 契约一致）：
  *  - parseRequest：自然语言 → JSON 结构化查询条件
  *  - explain：基于真实计算数据生成推荐解释
  *
@@ -10,10 +9,11 @@
  *  - LLM 不参与任何金额/成本/评分计算（确定性计算全在业务代码）
  *  - LLM 输出必须基于传入的真实数据，禁止虚构货源与金额
  *
+ * 说明：本类不绑定厂商，任何 OpenAI 兼容的 /chat/completions 服务都能用。
+ * 默认配置指向火山方舟（历史遗留），DeepSeek 官方接口见 deepseekLlm.ts。
+ *
  * 配置：
- *  - ARK_API_KEY  火山方舟 API key（必填）
- *  - ARK_MODEL    模型名/Endpoint ID（默认 deepseek-v3，可换 doubao 等）
- *  - ARK_BASE_URL 可选（默认 https://ark.cn-beijing.volces.com/api/v3）
+ *  - apiKey / model / baseUrl / label（label 只用于日志与报错文案）
  *
  * 容错：请求失败/超时/解析失败时自动回退 RuleBasedLlm，保证功能不断。
  */
@@ -48,11 +48,15 @@ export class ArkLlm implements LlmPort {
   /** 是否已发生回退 */
   fellBack = false;
 
-  constructor(opts: { apiKey: string; model?: string; baseUrl?: string; timeoutMs?: number }) {
+  /** 厂商名（日志/报错用，便于一眼看出是哪家在调） */
+  private label: string;
+
+  constructor(opts: { apiKey: string; model?: string; baseUrl?: string; timeoutMs?: number; label?: string }) {
     this.apiKey = opts.apiKey;
     this.model = opts.model ?? DEFAULT_MODEL;
     this.baseUrl = opts.baseUrl ?? DEFAULT_BASE;
     this.timeoutMs = opts.timeoutMs ?? 15000;
+    this.label = opts.label ?? '火山方舟';
     this.fallback = new RuleBasedLlm();
   }
 
@@ -92,13 +96,13 @@ export class ArkLlm implements LlmPort {
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as ChatResponse;
       this.lastError = body.error?.message ?? `HTTP ${res.status}`;
-      throw new Error(`火山方舟请求失败：${this.lastError}`);
+      throw new Error(`${this.label}请求失败：${this.lastError}`);
     }
     const body = (await res.json()) as ChatResponse;
     const content = body.choices?.[0]?.message?.content;
     if (!content) {
       this.lastError = '空响应';
-      throw new Error('火山方舟返回空响应');
+      throw new Error(`${this.label}返回空响应`);
     }
     console.log(`[LLM] ← OK ${Date.now() - started}ms | ${content.slice(0, 40)}`);
     return content;
@@ -175,11 +179,6 @@ export class ArkLlm implements LlmPort {
   }
 }
 
-/** 按环境变量选择 LLM：有 ARK_API_KEY 用真实 Ark，否则规则实现 */
-export function createLlm(env: Record<string, string | undefined> = process.env): LlmPort {
-  const key = env.ARK_API_KEY;
-  if (key) {
-    return new ArkLlm({ apiKey: key, model: env.ARK_MODEL, baseUrl: env.ARK_BASE_URL });
-  }
-  return new RuleBasedLlm();
-}
+/** 火山方舟默认端点（历史配置，新项目请用 DeepSeek 官方见 selectLlm.ts） */
+export const ARK_DEFAULT_BASE = DEFAULT_BASE;
+export const ARK_DEFAULT_MODEL = DEFAULT_MODEL;

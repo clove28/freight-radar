@@ -16,7 +16,7 @@ import { createFileRepositories } from '../data/fileRepository.js';
 import { DEMO_RECHARGE_AMOUNT, SERVICE_FEE_AMOUNT } from '../core/serviceFee.js';
 import { createCargoRepository } from '../data/apiRepository.js';
 import { createSmsProvider } from '../data/providers.js';
-import { createLlm } from '../ai/arkLlm.js';
+import { createLlm } from '../ai/selectLlm.js';
 import { AmapClient } from '../data/amap.js';
 import { RouteEnvironmentService } from './routeService.js';
 import { createAppServices, type AppServices, type LoadSort } from './services.js';
@@ -77,7 +77,7 @@ export function createApp(
     reposFinal.cargo = createCargoRepository(env);
   }
   const assistant = {
-    // P14：配置 ARK_API_KEY 时用真实火山方舟 LLM，否则规则实现
+    // P14：配置 DEEPSEEK_API_KEY（官方，首选）或 ARK_API_KEY（火山，兼容）时用真实 LLM，否则规则实现
     llm: createLlm(env),
     cargoRepo: reposFinal.cargo,
     vehicleRepo: reposFinal.vehicle,

@@ -8,6 +8,7 @@
  */
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
+import { describeProvider } from '../ai/selectLlm.js';
 import { PushHub } from './pushHub.js';
 import type { RepositorySet } from '../data/repository.js';
 
@@ -37,7 +38,7 @@ async function main(): Promise<void> {
     console.log(`   AI 助手:    POST http://localhost:${PORT}/api/assistant`);
     console.log(`   实时推送:    ws://localhost:${PORT}/api/ws ${pushHub ? '(已启用)' : '(需持久化模式)'}`);
     console.log(`   数据模式:   ${repos ? 'SQLite 持久化' : '内存 Mock'}${process.env.AMAP_KEY ? ' + 高德真实数据' : ' + 高德 Mock'}`);
-    console.log(`   AI 引擎:    ${process.env.ARK_API_KEY ? '🔴 火山方舟 LLM（模型：' + (process.env.ARK_MODEL ?? '未配置(默认)') + '）' : '⚪ 规则引擎'}`);
+    console.log(`   AI 引擎:    ${describeProvider(process.env).label}（模型：${describeProvider(process.env).model}）`);
   });
 
   const shutdown = () => {

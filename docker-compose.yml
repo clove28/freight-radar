@@ -28,10 +28,11 @@ services:
       # 行情 API（可选）
       - QUOTE_API_URL=${QUOTE_API_URL:-}
       - QUOTE_API_KEY=${QUOTE_API_KEY:-}
-      # 真实 LLM（P14 火山方舟）：配置后 AI 助手用 DeepSeek 大模型，否则规则引擎
+      # 真实 LLM（DeepSeek 官方，首选）；火山方舟为历史兼容配置
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-}
       - ARK_API_KEY=${ARK_API_KEY:-}
-      - ARK_MODEL=${ARK_MODEL:-deepseek-v4-pro-ga-260813}
-      - ARK_BASE_URL=${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
     volumes:
       - fr-data:/app/data
 

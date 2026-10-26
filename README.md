@@ -48,18 +48,19 @@ PERSIST=1 DATA_DIR=/my/data npm run dev   # 自定义数据目录
 AMAP_KEY=你的key PERSIST=1 npm run dev
 ```
 
-**真实大模型（火山方舟 DeepSeek）**：AI 助手用真实大模型解析需求 + 生成推荐解释（金额/评分仍由后端确定性计算，LLM 不参与）：
+**真实大模型（DeepSeek 官方 API）**：AI 助手用真实大模型解析需求 + 生成推荐解释（金额/评分仍由后端确定性计算，LLM 不参与）：
 ```bash
-export ARK_API_KEY="ark-你的key"
-export ARK_MODEL="deepseek-v4-pro-ga-260813"
+export DEEPSEEK_API_KEY="sk-你的key"   # https://platform.deepseek.com/api_keys
+export DEEPSEEK_MODEL="deepseek-chat"  # 要推理链可换 deepseek-reasoner
 PERSIST=1 npm run dev
 ```
-> 模型名查询：在火山方舟控制台"模型广场/模型列表"找**已开通生效**的模型（旧 deepseek-v3/r1 已下线，需用 V4 新版如 `deepseek-v4-pro-ga-260813`）。未配置 ARK_API_KEY 时自动回退规则引擎，功能不中断。
+> 直连 `https://api.deepseek.com`，不经过火山方舟等中间层，key 和账单都在 DeepSeek 平台自己手里。不配 key 时自动回退规则引擎，功能完整、0 消耗。
+> 换厂商零改动：只要目标是 OpenAI 兼容的 `/chat/completions`，实现 `LlmPort` 即可（见 `src/ai/selectLlm.ts`）。
 
 **Docker 部署**：
 ```bash
 docker build -t freight-radar .
-docker run -p 3000:3000 -e AMAP_KEY=xxx -e ARK_API_KEY=xxx -e ARK_MODEL=deepseek-v4-pro-ga-260813 -e PERSIST=1 -v fr-data:/app/data freight-radar
+docker run -p 3000:3000 -e AMAP_KEY=xxx -e DEEPSEEK_API_KEY=sk-xxx -e PERSIST=1 -v fr-data:/app/data freight-radar
 ```
 
 环境变量见 `.env.example`。
@@ -69,7 +70,7 @@ docker run -p 3000:3000 -e AMAP_KEY=xxx -e ARK_API_KEY=xxx -e ARK_MODEL=deepseek
 - 🌐 **公网上线指南（阿里云）**：见 `deploy\阿里云部署步骤.md`（买服务器 → 一键脚本 → 验证；用 IP:3000 直连，免域名免备案）
 - 🏠 **局域网先给老爸用（零成本）**：见 `deploy\局域网使用方案.md`（同 WiFi 手机访问）
 - ⚠️ 免责声明：`deploy\免责声明.txt`（上线必备）
-- 一键启动（含火山/高德/SQLite 全部 key，读 `.env`）：`start.ps1`
+- 一键启动（含 DeepSeek/高德/SQLite 全部 key，读 `.env`）：`start.ps1`
 
 ### 前端（P1 移动端产品层）
 
@@ -263,7 +264,7 @@ npm test
 | `tests/p11.test.ts` | 账本里程、CSV 导出、Provider 抽象 |
 | `tests/p12.test.ts` | CSV 每公里收益列 |
 | `tests/p13.test.ts` | 月度汇总字段 |
-| `tests/p14.test.ts` | 火山方舟 LLM：JSON 解析容错、字段白名单、失败回退规则引擎 |
+| `tests/p14.test.ts` | LLM 接入：JSON 解析容错、字段白名单、失败回退规则引擎、DeepSeek 官方优先于火山兼容配置 |
 | `tests/p15.test.ts` | HTML 报表、分页切片逻辑 |
 | `tests/p16.test.ts` | 货主信用排序 |
 | `tests/docs.test.ts` | README 测试清单与 `tests/` 目录一致性（防文档漂移） |

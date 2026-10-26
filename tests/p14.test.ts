@@ -1,10 +1,13 @@
 /**
- * P14 火山方舟 LLM 单元测试
- * 覆盖：JSON 解析容错（```json 包裹/前后杂文）、字段白名单、失败回退规则实现。
+ * P14 LLM 单元测试（火山方舟 → DeepSeek 官方迁移后仍覆盖原有契约）
+ * 覆盖：JSON 解析容错（```json 包裹/前后杂文）、字段白名单、失败回退、
+ *       以及「按环境变量选厂商」的优先级（DeepSeek 官方优先于火山兼容配置）。
  * （真实网络调用在端到端验证，这里用 mock fetch）
  */
 import { describe, expect, it, vi } from 'vitest';
-import { ArkLlm, createLlm } from '../src/ai/arkLlm.js';
+import { ArkLlm } from '../src/ai/arkLlm.js';
+import { DeepSeekLlm } from '../src/ai/deepseekLlm.js';
+import { createLlm, describeProvider, pickProvider } from '../src/ai/selectLlm.js';
 import { RuleBasedLlm } from '../src/ai/ruleLlm.js';
 
 describe('ArkLlm JSON 解析容错', () => {
@@ -75,7 +78,7 @@ describe('ArkLlm 失败回退', () => {
 });
 
 describe('createLlm 环境变量选择', () => {
-  it('有 ARK_API_KEY 用 ArkLlm', () => {
+  it('有 ARK_API_KEY 用 ArkLlm（火山，兼容保留）', () => {
     const llm = createLlm({ ARK_API_KEY: 'ark-xxx' });
     expect(llm).toBeInstanceOf(ArkLlm);
   });
@@ -88,5 +91,58 @@ describe('createLlm 环境变量选择', () => {
   it('可配置模型', () => {
     const llm = createLlm({ ARK_API_KEY: 'ark-xxx', ARK_MODEL: 'doubao-pro-32k' });
     expect((llm as ArkLlm)['model']).toBe('doubao-pro-32k');
+  });
+});
+
+describe('DeepSeek 官方 API（替代火山方舟）', () => {
+  it('配 DEEPSEEK_API_KEY 即走官方端点与默认模型', () => {
+    const llm = createLlm({ DEEPSEEK_API_KEY: 'sk-test' }) as DeepSeekLlm;
+    expect(llm).toBeInstanceOf(DeepSeekLlm);
+    expect(llm['baseUrl']).toBe('https://api.deepseek.com');
+    expect(llm['model']).toBe('deepseek-chat');
+  });
+
+  it('两个 key 同时存在时 DeepSeek 优先于火山', () => {
+    const env = { DEEPSEEK_API_KEY: 'sk-test', ARK_API_KEY: 'ark-xxx' };
+    expect(pickProvider(env)).toBe('deepseek');
+    expect(createLlm(env)).toBeInstanceOf(DeepSeekLlm);
+  });
+
+  it('可换模型与端点（reasoner / 自建代理）', () => {
+    const llm = createLlm({
+      DEEPSEEK_API_KEY: 'sk-test',
+      DEEPSEEK_MODEL: 'deepseek-reasoner',
+      DEEPSEEK_BASE_URL: 'https://proxy.example.com',
+    }) as DeepSeekLlm;
+    expect(llm['model']).toBe('deepseek-reasoner');
+    expect(llm['baseUrl']).toBe('https://proxy.example.com');
+  });
+
+  it('请求失败时文案标明是 DeepSeek（不再冒充火山）', async () => {
+    const llm = new DeepSeekLlm({ apiKey: 'sk-bad' });
+    const fake = { ok: false, status: 401, json: async () => ({ error: { message: 'Authentication Fails' } }) } as Response;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fake));
+    await expect(llm['chat']('sys', 'user')).rejects.toThrow(/DeepSeek请求失败/);
+    expect(llm['lastError']).toContain('Authentication Fails');
+    vi.unstubAllGlobals();
+  });
+
+  it('DeepSeek 挂了仍回退规则引擎，功能不断', async () => {
+    const llm = createLlm({ DEEPSEEK_API_KEY: 'sk-bad' });
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+    const r = await llm.parseRequest('帮我找从临沂到临汾的单');
+    expect((llm as DeepSeekLlm).fellBack).toBe(true);
+    expect(r.query.from).toBe('临沂');
+    vi.unstubAllGlobals();
+  });
+
+  it('describeProvider 如实报告当前引擎', () => {
+    expect(describeProvider({ DEEPSEEK_API_KEY: 'sk-test' })).toEqual({
+      provider: 'deepseek',
+      label: 'DeepSeek 官方',
+      model: 'deepseek-chat',
+    });
+    expect(describeProvider({ ARK_API_KEY: 'ark-x' }).provider).toBe('ark');
+    expect(describeProvider({}).provider).toBe('rule');
   });
 });
