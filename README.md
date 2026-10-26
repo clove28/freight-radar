@@ -67,7 +67,9 @@ docker run -p 3000:3000 -e AMAP_KEY=xxx -e DEEPSEEK_API_KEY=sk-xxx -e PERSIST=1 
 
 ### 部署上线（公网 / 局域网）
 
-- 🌐 **公网上线指南（阿里云）**：见 `deploy\阿里云部署步骤.md`（买服务器 → 一键脚本 → 验证；用 IP:3000 直连，免域名免备案）
+- 🌐 **公网上线（免域名免备案，约 ¥70–100/年）**：见 `deploy\阿里云部署步骤.md`；
+  服务器上一条命令搞定（装 Docker → 拉代码 → 起服务 → 自检）：
+  `bash <(curl -fsSL https://gitee.com/clove28/freight-radar/raw/main/deploy/bootstrap.sh)`
 - 🏠 **局域网先给老爸用（零成本）**：见 `deploy\局域网使用方案.md`（同 WiFi 手机访问）
 - ⚠️ 免责声明：`deploy\免责声明.txt`（上线必备）
 - 一键启动（含 DeepSeek/高德/SQLite 全部 key，读 `.env`）：`start.ps1`
