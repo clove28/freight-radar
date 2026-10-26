@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { ArkLlm } from '../src/ai/arkLlm.js';
-import { DeepSeekLlm } from '../src/ai/deepseekLlm.js';
+import { DeepSeekLlm, normalizeDeepSeekBase } from '../src/ai/deepseekLlm.js';
 import { createLlm, describeProvider, pickProvider } from '../src/ai/selectLlm.js';
 import { RuleBasedLlm } from '../src/ai/ruleLlm.js';
 
@@ -144,5 +144,28 @@ describe('DeepSeek 官方 API（替代火山方舟）', () => {
     });
     expect(describeProvider({ ARK_API_KEY: 'ark-x' }).provider).toBe('ark');
     expect(describeProvider({}).provider).toBe('rule');
+  });
+});
+
+describe('DeepSeek baseURL 清洗（防宿主注入串台）', () => {
+  it('空值回落官方根地址', () => {
+    expect(normalizeDeepSeekBase(undefined)).toBe('https://api.deepseek.com');
+    expect(normalizeDeepSeekBase('   ')).toBe('https://api.deepseek.com');
+  });
+
+  it('宿主注入的 Anthropic 兼容路径被忽略（实测踩过：会 404 后静默回退）', () => {
+    expect(normalizeDeepSeekBase('https://api.deepseek.com/anthropic')).toBe('https://api.deepseek.com');
+    expect(normalizeDeepSeekBase('https://api.deepseek.com/anthropic/')).toBe('https://api.deepseek.com');
+  });
+
+  it('去掉尾部斜杠，保留 /v1 与自建代理路径', () => {
+    expect(normalizeDeepSeekBase('https://api.deepseek.com/')).toBe('https://api.deepseek.com');
+    expect(normalizeDeepSeekBase('https://api.deepseek.com/v1')).toBe('https://api.deepseek.com/v1');
+    expect(normalizeDeepSeekBase('https://proxy.example.com/api/')).toBe('https://proxy.example.com/api');
+  });
+
+  it('环境变量里的脏值不会污染实例', () => {
+    const llm = createLlm({ DEEPSEEK_API_KEY: 'sk-test', DEEPSEEK_BASE_URL: 'https://api.deepseek.com/anthropic' }) as DeepSeekLlm;
+    expect(llm['baseUrl']).toBe('https://api.deepseek.com');
   });
 });
