@@ -53,6 +53,14 @@ export const DASHBOARD_TOP_N = 3;
 /** 单次推荐最大返回条数：防 AI/查询参数传入超大 topN 一次性刷屏 */
 export const MAX_TOP_N = 50;
 
+/**
+ * 行情价格异常判定系数：低于区间下限 ×0.92、高于上限 ×1.08（各放宽约 8%）。
+ * 注意：两个值故意保留字面量，不要改写成 `1 ± 0.08`——浮点结果会是
+ * 0.919999… / 1.080000…，恰好落在旧阈值上的价格会被改判，属语义漂移。
+ */
+export const PRICE_FLAG_LOW_RATIO = 0.92;
+export const PRICE_FLAG_HIGH_RATIO = 1.08;
+
 /** 损耗标准（‰）：农产品 5‰、冷藏 10‰、其他 2‰（与演示版一致） */
 export const LOSS_STD: Record<CargoClass, number> = {
   农产品: 5,

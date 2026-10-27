@@ -9,6 +9,7 @@
  */
 import type { CargoClass } from './types.js';
 import type { PriceFlag } from './order.js';
+import { PRICE_FLAG_HIGH_RATIO, PRICE_FLAG_LOW_RATIO } from './constants.js';
 
 /** 行情区间（元/公里） */
 export interface QuoteRange {
@@ -58,8 +59,8 @@ export function priceFlagByQuote(price: number, km: number, cls: CargoClass): { 
   const quote = quoteFor(cls, km);
   if (km <= 0) return { flag: 'normal', quote };
   const perKm = price / km;
-  if (perKm < quote.low * 0.92) return { flag: 'low', quote }; // 低于区间下限 ~8% 视为压价
-  if (perKm > quote.high * 1.08) return { flag: 'high', quote }; // 高于上限 ~8% 视为虚高
+  if (perKm < quote.low * PRICE_FLAG_LOW_RATIO) return { flag: 'low', quote }; // 低于区间下限 ~8% 视为压价
+  if (perKm > quote.high * PRICE_FLAG_HIGH_RATIO) return { flag: 'high', quote }; // 高于上限 ~8% 视为虚高
   return { flag: 'normal', quote };
 }
 

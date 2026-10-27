@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createFileRepositories } from '../src/data/fileRepository.js';
 import { quoteFor, priceFlagByQuote, kmAdjust } from '../src/core/quote.js';
+import { PRICE_FLAG_HIGH_RATIO, PRICE_FLAG_LOW_RATIO } from '../src/core/constants.js';
 import { RouteEnvironmentService } from '../src/server/routeService.js';
 import { AmapClient } from '../src/data/amap.js';
 import { createOrder } from '../src/core/order.js';
@@ -133,6 +134,26 @@ describe('行情价格异常（P5）', () => {
     const high = priceFlagByQuote(500 * 15, 500, '普货');
     expect(high.flag).toBe('high');
     expect(low.quote.note).toContain('参考区间');
+  });
+
+  it('异常阈值来自 constants，上下限各放宽 8%', () => {
+    expect(PRICE_FLAG_LOW_RATIO).toBe(0.92);
+    expect(PRICE_FLAG_HIGH_RATIO).toBe(1.08);
+    // 与注释里的「~8%」对齐：改一个阈值而忘了另一个/注释，这里会报警
+    expect(1 - PRICE_FLAG_LOW_RATIO).toBeCloseTo(0.08, 10);
+    expect(PRICE_FLAG_HIGH_RATIO - 1).toBeCloseTo(0.08, 10);
+  });
+
+  it('阈值边缘：留 1 分钱余量时判 normal，越过才判 low/high', () => {
+    const q = quoteFor('普货', 500);
+    // 用「元」为单位的 1 分钱余量，避开 perKm = price / km 在等号处的浮点抖动
+    const lowEdge = q.low * PRICE_FLAG_LOW_RATIO * 500;
+    expect(priceFlagByQuote(lowEdge + 0.01, 500, '普货').flag).toBe('normal');
+    expect(priceFlagByQuote(lowEdge - 0.01, 500, '普货').flag).toBe('low');
+
+    const highEdge = q.high * PRICE_FLAG_HIGH_RATIO * 500;
+    expect(priceFlagByQuote(highEdge - 0.01, 500, '普货').flag).toBe('normal');
+    expect(priceFlagByQuote(highEdge + 0.01, 500, '普货').flag).toBe('high');
   });
 });
 
