@@ -67,6 +67,10 @@ export function calcCost(cargo: Cargo, vehicle: Vehicle, opts: CostOptions = {})
 export function truckMatches(vehicleTruck: string, cargoTruck: string): boolean {
   const a = vehicleTruck.replace(/\s+/g, '');
   const b = cargoTruck.replace(/\s+/g, '');
+  // 未知 ≠ 匹配：任一侧没填车型（空串或纯空白）时直接判不匹配。
+  // 否则 String.prototype.includes('') 恒为 true，空车型的车辆档案会对所有货源
+  // 拿满车型分（权重 10%），"车型不符"这道防线静默失效。
+  if (!a || !b) return false;
   return a === b || a.includes(b) || b.includes(a);
 }
 

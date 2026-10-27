@@ -119,8 +119,9 @@ export function filterCargoes(cargos: Cargo[], vehicle: Vehicle, q: DriverQuery,
     if (c.status !== 'open') return false;
     // 载重约束
     if (!canCarry(vehicle, c)) return false;
-    // 车型约束（司机明确指定车型时）
-    if (q.truck && !truckMatches(q.truck, c.truck)) return false;
+    // 车型约束（司机明确指定车型时；纯空白视同未指定，保持"不过滤"的既有行为）
+    const truckFilter = q.truck?.trim();
+    if (truckFilter && !truckMatches(truckFilter, c.truck)) return false;
     // 出发地
     if (q.from && !c.from.includes(q.from)) return false;
     // 目的地

@@ -79,6 +79,10 @@ describe('scoreVehicle 车型分', () => {
   it('车型不匹配低分', () => {
     expect(scoreVehicle(mk('b', { truck: '9.6米' }), vehicle)).toBe(20);
   });
+  it('车档案没填车型时不再给满分（未知 ≠ 匹配）', () => {
+    const noTruck: Vehicle = { ...vehicle, truck: '' };
+    expect(scoreVehicle(mk('c', {}), noTruck)).toBe(20);
+  });
 });
 
 describe('filterCargoes 业务过滤', () => {
@@ -115,6 +119,17 @@ describe('filterCargoes 业务过滤', () => {
   it('货物关键字', () => {
     const r = filterCargoes(list, vehicle, { cargo: '黄豆粕' });
     expect(r.length).toBeGreaterThan(0);
+  });
+
+  it('指定车型时只保留匹配货源', () => {
+    const nine = mk('nine', { truck: '9.6米' });
+    const r = filterCargoes([nine, mk('wide', {})], vehicle, { truck: '9.6米' });
+    expect(r.map(c => c.id)).toEqual(['nine']);
+  });
+
+  it('纯空白车型查询视同未指定，不做过滤', () => {
+    const r = filterCargoes(list, vehicle, { truck: '   ' });
+    expect(r.map(c => c.id).sort()).toEqual(['a', 'b']);
   });
 });
 

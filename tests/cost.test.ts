@@ -103,4 +103,16 @@ describe('truckMatches 车型匹配', () => {
   it('不匹配', () => {
     expect(truckMatches('13米高栏', '9.6米')).toBe(false);
   });
+  it('任一侧车型为空时判不匹配（未知 ≠ 匹配）', () => {
+    expect(truckMatches('', '13米高栏')).toBe(false);
+    expect(truckMatches('13米高栏', '')).toBe(false);
+    expect(truckMatches('', '')).toBe(false);
+  });
+  it('纯空白车型视同未填，同样不匹配', () => {
+    expect(truckMatches('  ', '13米高栏')).toBe(false);
+    expect(truckMatches('13米高栏', '\t\n')).toBe(false);
+  });
+  it('车型内部的空白仍被忽略，不影响正常匹配', () => {
+    expect(truckMatches('13米 高栏', ' 13米 ')).toBe(true);
+  });
 });
