@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { calcCost, canCarry, truckMatches } from '../src/core/cost.js';
+import { EMPTY_KM_DEFAULT_RATIO } from '../src/core/constants.js';
 import type { Cargo, Vehicle } from '../src/core/types.js';
 
 const vehicle: Vehicle = {
@@ -81,6 +82,28 @@ describe('calcCost 成本计算', () => {
     const c = calcCost(zero, vehicle);
     expect(c.perKm).toBe(0);
     expect(c.totalCost).toBeGreaterThan(0); // 空驶0，其他费用仍在
+  });
+});
+
+describe('空驶里程默认比例', () => {
+  it('常量锁定为 0.15，与历史估算完全一致', () => {
+    expect(EMPTY_KM_DEFAULT_RATIO).toBe(0.15);
+  });
+
+  it('未注入空驶里程时按「运距 × 常量」四舍五入，再算空驶成本', () => {
+    // 覆盖 0、取整边界（10×0.15=1.5 与 99×0.15=14.85）和长距离
+    for (const km of [0, 1, 10, 99, 500, 1234]) {
+      const c = calcCost({ ...cargo, km }, vehicle);
+      const emptyKm = Math.round(km * EMPTY_KM_DEFAULT_RATIO);
+      const expected = Math.round(((emptyKm / 100) * vehicle.fuelPer100km * vehicle.fuelPrice) * 100) / 100;
+      expect(c.emptyCost).toBe(expected);
+    }
+  });
+
+  it('注入真实空驶里程时优先于默认比例', () => {
+    const c = calcCost(cargo, vehicle, { emptyKm: 200 });
+    // 200/100*32*7.2 = 460.8，而不是默认 75km 的 172.8
+    expect(c.emptyCost).toBe(460.8);
   });
 });
 

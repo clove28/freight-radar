@@ -15,6 +15,7 @@
  * 由路线规划服务提供精确值。计算函数本身只依赖传入数字，保持纯函数可测。
  */
 import type { Cargo, CostEstimate, Vehicle } from './types.js';
+import { EMPTY_KM_DEFAULT_RATIO } from './constants.js';
 import { fuelFactor, tollFactor, type RouteStrategy } from './routeStrategy.js';
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -35,8 +36,11 @@ export interface CostOptions {
 export function calcCost(cargo: Cargo, vehicle: Vehicle, opts: CostOptions = {}): CostEstimate {
   const totalKm = Math.max(cargo.km, 0);
   // 空驶里程：P3 起可由 RoutePlanner 注入真实值（当前城市→装货地）；
-  // 未注入时保留 15% 估算（向后兼容）。
-  const emptyKm = opts.emptyKm !== undefined ? Math.max(0, Math.round(opts.emptyKm)) : Math.round(totalKm * 0.15);
+  // 未注入时按 EMPTY_KM_DEFAULT_RATIO（15%）估算（向后兼容）。
+  const emptyKm =
+    opts.emptyKm !== undefined
+      ? Math.max(0, Math.round(opts.emptyKm))
+      : Math.round(totalKm * EMPTY_KM_DEFAULT_RATIO);
 
   // P4：路线策略与天气影响。缺省（不传 strategy）时与旧版行为完全一致；
   // 只有显式传入 strategy 才应用策略系数（向后兼容）。

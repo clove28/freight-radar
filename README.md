@@ -30,7 +30,7 @@
 
 - **语言**：TypeScript（严格模式，类型安全）
 - **后端**：Node.js + Express（纯业务逻辑，无 ORM 依赖）
-- **测试**：Vitest（`npm test` 25 个测试文件 / 266 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
+- **测试**：Vitest（`npm test` 25 个测试文件 / 269 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
   数字以 `npm test` 实际输出为准）
 - **运行**：tsx（开发热重载）；`npm run build` 可产出纯 JS
 

@@ -47,6 +47,13 @@ export const ROUTE_NONE_SCORE = 25;
 export const BACKHAUL_SCORE = 100;
 export const BACKHAUL_NONE_SCORE = 20;
 
+/**
+ * 空驶里程的默认估算比例：未注入真实空驶里程时，按运距的 15% 估算。
+ * 真实值可由 RoutePlanner 注入（CostOptions.emptyKm），此时本常量不生效。
+ * 保留 0.15 字面量，不要改写成 `1 - 0.85` 之类的算式，避免无谓的浮点语义变化。
+ */
+export const EMPTY_KM_DEFAULT_RATIO = 0.15;
+
 /** 推荐默认返回条数 */
 export const DEFAULT_TOP_N = 5;
 export const DASHBOARD_TOP_N = 3;
