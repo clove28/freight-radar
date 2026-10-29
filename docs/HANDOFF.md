@@ -5,7 +5,8 @@
 
 ## 1. 当前目标
 
-P0「文档与工程基建收敛」已完成；下一步进入 **P1**：PRD、竞品分析归档、验收记录、分支/PR 规范。
+D0（文档与工程基建）已完成；D1（需求与记录）本次收尾；下一阶段 P2（工程增强）与 P17（真实化冲刺）。
+> 命名约定：产品阶段用 `P0–P17`；文档/协作阶段用 `D0/D1`，避免混淆。
 
 ## 2. 已完成（近期）
 
@@ -15,17 +16,18 @@ P0「文档与工程基建收敛」已完成；下一步进入 **P1**：PRD、�
 | 2026-10-29 | 新增验收标准 v1.0（UAT / 非功能 / 上线门 / 一票否决） | `6793a81` |
 | 2026-10-29 | 修复 UAT-04：AI 助手与大厅金额口径统一（注入真实空驶里程/策略） | `8c8150d` |
 | 2026-10-29 | 验收标准快照更新（UAT-04 已回归） | `24544c4` |
-| 2026-10-29 | P0：AGENTS 瘦身为入口 + docs 索引/architecture/env/testing/pitfalls + README API 表/死链/AI 流程修复 + 文档新鲜度校验 + engines/LICENSE/CI + tag | 见 `git log --oneline -6` |
+| 2026-10-29 | D0（文档/基建）：AGENTS 瘦身为入口 + docs 索引/architecture/env/testing/pitfalls + README API 表/死链/AI 流程修复 + 文档新鲜度校验 + engines/LICENSE/CI + tag | 见 `git log --oneline -10` |
 | 2026-10-29 | 删除 Gitee 遗留分支 `master`；GitHub 镜像 force 同步完成（旧历史留本地 `backup/github-main`） | 见本次 docs 提交 |
+| 2026-10-29 | D1（需求/记录）：PRD（用户故事 / P0–P17 / 非目标 / P17 DoD）、竞品分析迁入 + 采纳表、验收记录 4 份、分支/PR 规范、`.editorconfig` | 见 `git log --oneline -4` |
 
 ## 3. 未完成 / 下一步（按顺序）
 
-1. **P1** `docs/PRD.md`：用户故事（US-01…）+ P0–P17 需求表（目标/UAT 映射/优先级理由/状态）+ 非目标 + 变更记录。
-2. **P1** `docs/research/competitive-2026-10.md`：把外层借鉴文档迁入，补「借鉴点 → 采纳/否决 → 落地 commit」表。
-3. **P1** `docs/验收记录/`：按验收标准 §12 补 4 份（P3 / P14 / P16 / UAT-04）。
-4. **P1** 分支/PR 模板；阶段收尾打 `v0.x.0` tag。
-5. **P2** 前端最小测试、ESLint/Prettier 二选一（或删除相关声明）、`.editorconfig`。
-6. ✅ GitHub 镜像已 force 同步（2026-10-29，`origin/main` = `gitee/main`）；Gitee `master` 已删除。后续保持两边同步即可（规则见 [pitfalls.md](pitfalls.md)）。
+1. **P2** AI 助手合并司机底线偏好（`services.ask` 合并 `prefs` 后再 `recommend`），补回归测试（验收标准 §10-2）。
+2. **P2** 评分排序评测集：用真实/构造订单证明权重更优（竞品分析 #7）。
+3. **P2** token / 成本可观测（成本面板或日志聚合，竞品分析 #6）。
+4. **P2** Docker 部署验证（需有 Docker 的机器/服务器）。
+5. **P17** 按 [PRD.md](PRD.md) §6 逐项 DoD 开工：真实货源 API → 短信/行情 → HTTPS → 微信扫码 → 小程序真机 → 服务端 PDF。
+6. ✅ 已完成：GitHub 镜像同步、Gitee `master` 清理（2026-10-29）。
 
 ## 4. 环境
 
@@ -46,4 +48,4 @@ P0「文档与工程基建收敛」已完成；下一步进入 **P1**：PRD、�
 
 ## 7. 最近提交
 
-`git log --oneline -6`（P0 的 2–3 个提交在本次收尾后可见）。
+`git log --oneline -10`（D0 / D1 的提交均可见；产品阶段 P0–P17 见 [PRD.md](PRD.md)）。

@@ -4,7 +4,7 @@
 
 > 核心闭环：找货 → 算成本 → 算净收益 → 算每公里收益 → 综合评分 → AI 推荐 → 找回程货 → 记录结果 → 形成历史 → 个性化推荐
 >
-> 文档入口：[AGENTS.md](AGENTS.md)（协作契约）｜[docs/README.md](docs/README.md)（文档索引）｜[docs/验收标准.md](docs/验收标准.md)（验收判定）
+> 文档入口：[AGENTS.md](AGENTS.md)（协作契约）｜[docs/README.md](docs/README.md)（文档索引）｜[docs/PRD.md](docs/PRD.md)（需求与优先级）｜[docs/验收标准.md](docs/验收标准.md)（验收判定）
 
 ## 界面预览
 
@@ -310,6 +310,8 @@ npm test
 - [x] **P15 报表与多端**：收益报表 HTML 导出（`/api/export/books.html`，自包含中文无损，浏览器打开即可打印/存 PDF）+ 货源 API 分页（page/limit）+ AI 引擎前端徽标（🔴 DeepSeek·V4 / ⚪ 规则引擎，一眼确认接入）+ 火山方舟模型探测（发现 deepseek-v4-pro-ga-260813）+ LLM 调用日志 + 小程序云端货源模式（从后端 /api/cargos 拉真实评分货源，卡片显示净收益/每公里/评分，后端不可达自动回退本地 mock）+ LLM 省 token 模式（不带 ARK_API_KEY 即规则引擎 0 消耗）
 - [x] **P16 高德真实数据 + 货主信用管理**：高德 API 接入（真实路线规划 971km/过路费/导航步骤 + 真实天气改用 adcode + 真实沿途加油站/餐馆，AMAP_KEY 可配无 key 回退 Mock）+ 货主信用管理页（`/credits`：列出全部货主评分/好坏差/黑名单/标签/备注，可评价（👍+1/0/👎−3+标签+备注）、移出黑名单，从"我的"页入口进入）
 - [ ] **P17 真实化冲刺**：真实货源 API、短信/行情 Key 接入、微信扫码、HTTPS 正式部署、小程序真机联调、服务端 PDF 报表
+
+> 需求来源、优先级理由与 P17 逐项 DoD 见 [docs/PRD.md](docs/PRD.md)；本列表只保留状态。
 
 > 旧演示蓝本（`卡友助手.html`、`小程序版/`）当前不在本仓库、也不在 `D:\字研班` 工作区；
 > 本仓库是唯一落地实现，不要按旧路径找文件。
