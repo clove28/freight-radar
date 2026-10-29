@@ -30,7 +30,7 @@ services:
       - QUOTE_API_KEY=${QUOTE_API_KEY:-}
       # 真实 LLM（DeepSeek 官方，首选）；火山方舟为历史兼容配置
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-flash}
       - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-}
       - ARK_API_KEY=${ARK_API_KEY:-}
     volumes:

@@ -2,6 +2,9 @@
   "name": "freight-radar",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "description": "货运雷达 · 面向个体大货车司机的 AI 货运决策系统",
   "type": "module",
   "scripts": {
