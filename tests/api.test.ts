@@ -135,6 +135,34 @@ describe('货运雷达 API', () => {
     expect(res.status).toBe(400);
   });
 
+  it('UAT-07 AI 助手应用司机底线偏好（与大厅同源）', async () => {
+    const putPrefs = async (patch: Record<string, unknown>) =>
+      fetch(`${base}/api/prefs`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+    await putPrefs({ minPerKm: 4, maxKm: 800, minNetIncome: 1000 });
+    try {
+      const res = await fetch(`${base}/api/assistant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: '看看有什么活' }),
+      });
+      expect(res.status).toBe(200);
+      const rec = (await res.json()) as Recommendation;
+      expect(rec.scored.length).toBeGreaterThan(0);
+      for (const s of rec.scored) {
+        expect(s.cost.perKm).toBeGreaterThanOrEqual(4);
+        expect(s.cargo.km).toBeLessThanOrEqual(800);
+        expect(s.cost.netIncome).toBeGreaterThanOrEqual(1000);
+      }
+    } finally {
+      // 不污染后续用例
+      await putPrefs({ minPerKm: null, maxKm: null, minNetIncome: null });
+    }
+  });
+
   it('UAT-04 AI 助手与大厅对同一货源金额口径一致（空驶里程已注入）', async () => {
     const { body: hall } = await getJson<{ items: ScoredCargo[] }>(`${base}/api/cargos?limit=100`);
     const hallDemo2 = hall.items.find(s => s.cargo.id === 'DEMO2');

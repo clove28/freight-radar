@@ -429,15 +429,20 @@ export function createAppServices(repos: RepositorySet, assistant: AssistantDeps
     getCargoExplain,
     listRanked,
     /**
-     * AI 助手：与大厅/详情/Dashboard 共用同一套成本口径。
-     * 先按真实空驶里程（RoutePlanner）与路线策略建 `costFor`，再交给 AI 编排；
+     * AI 助手：与大厅/详情/Dashboard 共用同一套成本口径与司机底线偏好。
+     * 先按真实空驶里程（RoutePlanner）与路线策略建 `costFor`、取 `prefs`，再交给 AI 编排；
      * LLM 仍只做自然语言理解与解释，金额/评分全部由业务代码计算。
-     * 不注入会让同一货源在「AI 推荐」与「大厅」显示不同净收益（UAT-04 回归）。
+     * 不注入会让同一货源在「AI 推荐」与「大厅」显示不同净收益（UAT-04），
+     * 不合并 prefs 会让 AI 推荐无视司机底线（验收标准 §10）。
      */
     ask: async (text: string) => {
-      const [cargos, vehicle] = await Promise.all([repos.cargo.listAll(), repos.vehicle.get()]);
+      const [cargos, vehicle, prefs] = await Promise.all([
+        repos.cargo.listAll(),
+        repos.vehicle.get(),
+        repos.prefs.get(),
+      ]);
       const costFor = await buildCostFor(cargos, vehicle);
-      return recommend(assistant, text, costFor);
+      return recommend(assistant, text, costFor, prefs);
     },
     listOrders,
     acceptLoad,

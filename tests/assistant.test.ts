@@ -137,6 +137,27 @@ describe('recommend 推荐流程', () => {
     expect(r.scored.some(s => s.cost.emptyCost > 0)).toBe(true);
   });
 
+  it('prefs 底线合并进推荐（minPerKm / maxKm / minNetIncome）', async () => {
+    const r = await recommend(deps, '看看有什么活', undefined, {
+      minPerKm: 4,
+      maxKm: 800,
+      minNetIncome: 1000,
+    });
+    expect(r.scored.length).toBeGreaterThan(0);
+    for (const s of r.scored) {
+      expect(s.cost.perKm).toBeGreaterThanOrEqual(4);
+      expect(s.cargo.km).toBeLessThanOrEqual(800);
+      expect(s.cost.netIncome).toBeGreaterThanOrEqual(1000);
+    }
+  });
+
+  it('显式查询条件优先于 prefs 底线', async () => {
+    // 明确说"每公里不低于3块"：prefs 的 6 不能覆盖它，否则本单会被误杀
+    const r = await recommend(deps, '从临沂回临汾的黄豆粕，每公里不低于3块', undefined, { minPerKm: 6 });
+    expect(r.scored.length).toBeGreaterThan(0);
+    for (const s of r.scored) expect(s.cost.perKm).toBeGreaterThanOrEqual(3);
+  });
+
   it('无匹配条件时返回空列表与友好提示', async () => {
     const r = await recommend(deps, '每公里不低于100块的单'); // 没有任何单能到每公里100元
     expect(r.scored.length).toBe(0);
