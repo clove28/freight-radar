@@ -37,6 +37,9 @@ npx tsc --noEmit && npm test && npm run build
 改前端再补一条 `cd web && npm run build`。
 2026-10-29 实测：`tsc` 通过、**25 文件 / 269 用例全绿**、前后端 build 均通过（数字会变，以实际输出为准）。
 
+> 完整验收标准（UAT 场景、非功能门、上线门、一票否决、基线快照）见 [`docs/验收标准.md`](docs/验收标准.md)；
+> 本节只列提交级验收门，阶段/上线验收以那份文件为准。
+
 **两个容易踩的工程事实**
 
 - 这是**一个仓库两个 npm 包**：根目录是后端（Express/tsx/vitest），`web/` 是独立包（React/Vite）。根 `npm install` / `npm test` **不覆盖**前端；改前端必须进 `web/`。
