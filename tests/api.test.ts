@@ -135,6 +135,30 @@ describe('货运雷达 API', () => {
     expect(res.status).toBe(400);
   });
 
+  it('UAT-04 AI 助手与大厅对同一货源金额口径一致（空驶里程已注入）', async () => {
+    const { body: hall } = await getJson<{ items: ScoredCargo[] }>(`${base}/api/cargos?limit=100`);
+    const hallDemo2 = hall.items.find(s => s.cargo.id === 'DEMO2');
+    expect(hallDemo2).toBeDefined();
+
+    const res = await fetch(`${base}/api/assistant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '帮我看看从临沂回临汾的黄豆粕，每公里不低于3块' }),
+    });
+    expect(res.status).toBe(200);
+    const rec = (await res.json()) as Recommendation;
+    expect(rec.query.from).toBe('临沂');
+    const aiDemo2 = rec.scored.find(s => s.cargo.id === 'DEMO2');
+    expect(aiDemo2).toBeDefined();
+
+    // 同一货源必须共用同一份成本/评分：此前 AI 侧漏注入 costFor（按 15% 估空驶），
+    // 与大厅的 0 空驶差 221 元，属 UAT-04 的 MUST 回归项。
+    expect(aiDemo2!.cost.emptyCost).toBe(hallDemo2!.cost.emptyCost);
+    expect(aiDemo2!.cost.netIncome).toBe(hallDemo2!.cost.netIncome);
+    expect(aiDemo2!.cost.perKm).toBe(hallDemo2!.cost.perKm);
+    expect(aiDemo2!.score.total).toBe(hallDemo2!.score.total);
+  });
+
   it('GET /api/cargos/:id/explain 返回 AI 解释与 404', async () => {
     const { body: list } = await getJson<ScoredCargo[]>(`${base}/api/cargos`);
     const id = list[0]!.cargo.id;

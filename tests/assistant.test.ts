@@ -9,6 +9,9 @@ import { describe, expect, it } from 'vitest';
 import { RuleBasedLlm } from '../src/ai/ruleLlm.js';
 import { recommend, recommendDefault } from '../src/ai/assistant.js';
 import { createMockRepositories } from '../src/data/mock.js';
+import { MockRoutePlanner } from '../src/core/routePlanner.js';
+import { rankCargoes } from '../src/core/scoring.js';
+import type { Cargo } from '../src/core/types.js';
 
 describe('RuleBasedLlm.parseRequest 自然语言理解', () => {
   const llm = new RuleBasedLlm();
@@ -103,6 +106,35 @@ describe('recommend 推荐流程', () => {
     const first = r.scored[0]!;
     // 只要 topN>1，第一个是回程货（mock 数据里回程/常跑单评分最高）
     expect(first.isBackhaul).toBe(true);
+  });
+
+  it('注入 costFor 后与大厅同一口径：结果等于 rankCargoes(同一 costFor)', async () => {
+    // 复现 UAT-04：车辆当前在临沂，DEMO2 也从临沂出发 → 真实空驶里程应为 0，
+    // AI 助手必须和大厅一样用这份 costFor，否则同一单会算出不同净收益。
+    const [cargos, vehicle] = await Promise.all([deps.cargoRepo.listAll(), deps.vehicleRepo.get()]);
+    const planner = new MockRoutePlanner();
+    const emptyKm = new Map<string, number>();
+    for (const c of cargos) emptyKm.set(c.id, await planner.estimateEmptyKm(vehicle.currentCity, c.from));
+    const costFor = (c: Cargo) => ({ emptyKm: emptyKm.get(c.id) });
+
+    const text = '帮我看看从临沂回临汾的黄豆粕，每公里不低于3块';
+    const r = await recommend(deps, text, costFor);
+    const { query } = await new RuleBasedLlm().parseRequest(text);
+    const expected = rankCargoes(cargos, vehicle, query, costFor);
+
+    expect(r.scored.map(s => s.cargo.id)).toEqual(expected.map(s => s.cargo.id));
+    expect(r.scored.map(s => s.cost.netIncome)).toEqual(expected.map(s => s.cost.netIncome));
+
+    const demo2 = r.scored.find(s => s.cargo.id === 'DEMO2');
+    expect(demo2).toBeDefined();
+    expect(demo2!.cost.emptyCost).toBe(0); // 车就在装货城市，空驶成本必须为 0
+  });
+
+  it('不传 costFor 时保持旧行为：仍按运距 15% 估算空驶', async () => {
+    const r = await recommend(deps, '看看有什么活');
+    expect(r.scored.length).toBeGreaterThan(0);
+    // 默认推荐里必然有单不是从当前城市出发 → 仍有空驶成本，兼容旧调用方
+    expect(r.scored.some(s => s.cost.emptyCost > 0)).toBe(true);
   });
 
   it('无匹配条件时返回空列表与友好提示', async () => {
