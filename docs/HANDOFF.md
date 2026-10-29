@@ -19,15 +19,15 @@ D0（文档与工程基建）已完成；D1（需求与记录）本次收尾；�
 | 2026-10-29 | D0（文档/基建）：AGENTS 瘦身为入口 + docs 索引/architecture/env/testing/pitfalls + README API 表/死链/AI 流程修复 + 文档新鲜度校验 + engines/LICENSE/CI + tag | 见 `git log --oneline -10` |
 | 2026-10-29 | 删除 Gitee 遗留分支 `master`；GitHub 镜像 force 同步完成（旧历史留本地 `backup/github-main`） | 见本次 docs 提交 |
 | 2026-10-29 | D1（需求/记录）：PRD（用户故事 / P0–P17 / 非目标 / P17 DoD）、竞品分析迁入 + 采纳表、验收记录 4 份、分支/PR 规范、`.editorconfig` | 见 `git log --oneline -4` |
+| 2026-10-29 | D1：AI 助手合并司机底线偏好（`recommend` 增加 `prefs`），补 UAT-07 回归 | 见 `git log --oneline -3` |
 
 ## 3. 未完成 / 下一步（按顺序）
 
-1. **P2** AI 助手合并司机底线偏好（`services.ask` 合并 `prefs` 后再 `recommend`），补回归测试（验收标准 §10-2）。
-2. **P2** 评分排序评测集：用真实/构造订单证明权重更优（竞品分析 #7）。
-3. **P2** token / 成本可观测（成本面板或日志聚合，竞品分析 #6）。
-4. **P2** Docker 部署验证（需有 Docker 的机器/服务器）。
-5. **P17** 按 [PRD.md](PRD.md) §6 逐项 DoD 开工：真实货源 API → 短信/行情 → HTTPS → 微信扫码 → 小程序真机 → 服务端 PDF。
-6. ✅ 已完成：GitHub 镜像同步、Gitee `master` 清理（2026-10-29）。
+1. **P2** 评分排序评测集：用真实/构造订单证明权重更优（竞品分析 #7）。
+2. **P2** token / 成本可观测（成本面板或日志聚合，竞品分析 #6）。
+3. **P2** Docker 部署验证（需有 Docker 的机器/服务器）。
+4. **P17** 按 [PRD.md](PRD.md) §6 逐项 DoD 开工：真实货源 API → 短信/行情 → HTTPS → 微信扫码 → 小程序真机 → 服务端 PDF。
+5. ✅ 已完成：GitHub 镜像同步、Gitee `master` 清理、AI 助手底线偏好合并（2026-10-29）。
 
 ## 4. 环境
 

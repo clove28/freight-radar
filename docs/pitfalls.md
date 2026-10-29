@@ -23,11 +23,11 @@
   - 规则：大厅/详情/Dashboard/AI 助手共用同一份 `costFor`；回归断言在 `tests/api.test.ts`（UAT-04）。
   - 反例：`8c8150d` 修复前，AI 推荐的钱比大厅少。
 
-- **AI 助手未应用司机底线偏好**
+- **AI 助手未应用司机底线偏好（2026-10-29 已修）**
   - 现象：设置了 `minPerKm` / 最大运距后，大厅过滤生效，但 AI 助手仍可能返回低于底线的单。
   - 根因：`services.ask` 把用户话术直接交给 `recommend()`，没有像 `listRanked` 那样先合并 `prefs`。
-  - 规则：AI 助手与大厅的过滤口径也应同源；修复时在 `ask` 里合并 `prefs` 并补测试（登记在验收标准 §10-2）。
-  - 反例：2026-10-29 复查时发现，未修，列入 P2。
+  - 处理：`recommend(deps, text, costFor?, prefs?)` —— `minPerKm`/`maxKm` 排序前合并（显式条件优先），`minNetIncome` 排序后二次过滤；`services.ask` 取 `prefs` 传入。回归见 `tests/assistant.test.ts` 与 `tests/api.test.ts`（UAT-07）。
+  - 规则：AI 助手与大厅的底线口径必须同源；新增过滤条件时两边一起改、一起测。
 
 - **阈值不要改写成算式**
   - 现象：把 `0.92` 写成 `1 - 0.08`、`0.15` 写成 `1 - 0.85` 后，边界价格/里程被改判。
