@@ -3,6 +3,8 @@
 面向个体大货车司机的 **AI 货运决策系统** —— 帮司机判断"哪一单更值得跑"。
 
 > 核心闭环：找货 → 算成本 → 算净收益 → 算每公里收益 → 综合评分 → AI 推荐 → 找回程货 → 记录结果 → 形成历史 → 个性化推荐
+>
+> 文档入口：[AGENTS.md](AGENTS.md)（协作契约）｜[docs/README.md](docs/README.md)（文档索引）｜[docs/验收标准.md](docs/验收标准.md)（验收判定）
 
 ## 界面预览
 
@@ -30,7 +32,7 @@
 
 - **语言**：TypeScript（严格模式，类型安全）
 - **后端**：Node.js + Express（纯业务逻辑，无 ORM 依赖）
-- **测试**：Vitest（`npm test` 25 个测试文件 / 272 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
+- **测试**：Vitest（`npm test` 25 个测试文件 / 281 个用例，覆盖成本计算/评分/过滤/AI 编排/API；
   数字以 `npm test` 实际输出为准）
 - **运行**：tsx（开发热重载）；`npm run build` 可产出纯 JS
 
@@ -102,8 +104,10 @@ npm run build      # 产出 web/dist，后端自动托管
 | GET | `/api/dashboard` | 首页聚合：车辆/城市/AI Top1+Top3/今日本月收益/回程状态/订单数 |
 | GET | `/api/cargos` | 货源大厅：评分排序 + 条件过滤（from/to/truck/cargo/运距/收益下限/回程）|
 | GET | `/api/cargos?sort=` | 排序：`ai`(默认) / `netIncome` / `perKm` / `distance` |
+| POST | `/api/cargos` | 手动发单（P17 车队互助货源池，需登录态字段校验） |
 | GET | `/api/cargos/:id` | 货源详情（成本拆解 + 评分分解） |
 | GET | `/api/cargos/:id/explain` | 单货源 AI 解释（"为什么推荐"） |
+| GET/POST | `/api/cargos/:id/feedback` | 卡友反馈：查看 / 提交（装货等待、装卸难易） |
 | POST | `/api/assistant` | AI 助手：自然语言 → 推荐 + 解释 |
 | GET | `/api/vehicle` | 车辆档案 |
 | PUT | `/api/vehicle` | 更新车辆档案（编辑后所有计算用新参数） |
@@ -114,6 +118,8 @@ npm run build      # 产出 web/dist，后端自动托管
 | POST | `/api/orders/:id/steps/:stepId` | 完成证据链一步 |
 | POST | `/api/orders/:id/loss` | 损耗对比（`{loadTons, unloadTons}`） |
 | GET | `/api/orders/:id/pack` | 生成/查看证据包 |
+| GET | `/api/service-fee/balance` | 平台服务费余额（虚拟额度，不可提现/转账） |
+| POST | `/api/service-fee/recharge` | 演示充值虚拟额度（P11） |
 | GET | `/api/credits` | 货主信用（P3） |
 | POST | `/api/credits/rate` | 评价货主（`{owner, level: good/medium/bad, tags?, comment?}`） |
 | POST | `/api/credits/:owner/unblacklist` | 移出黑名单 |
@@ -122,8 +128,10 @@ npm run build      # 产出 web/dist，后端自动托管
 | GET/POST | `/api/books` | 记账：列表/记一笔（P11，支持 km 里程字段） |
 | PATCH/DELETE | `/api/books/:id` | 更新（km 补录）/删除一笔账（P12） |
 | GET | `/api/export/books.csv` | 收益报表 CSV 导出（P11，司机对账，带 BOM 兼容 Excel，含每公里收益列） |
+| GET | `/api/export/books.html` | 收益报表 HTML（P15，自包含中文无损，浏览器打开即可打印/存 PDF） |
 | GET | `/api/route/strategies` | 路线策略选项（P4） |
 | GET | `/api/route/environment?from&to&strategy` | 路线环境全景：路径/天气影响/补给点（P4） |
+| GET | `/api/route/compare` | 多策略路线对比（P4） |
 | GET | `/api/events` | SSE 实时推送：匹配回程/常跑的新货源提醒（P6，兼容保留） |
 | WS | `/api/ws` | WebSocket 实时推送：双向订阅（P7，`{type:'subscribe', backhaulOnly:true}`） |
 | GET/POST | `/api/drivers` | 多司机账号：列表/创建（P6，需 SQLite 模式） |
@@ -218,12 +226,12 @@ curl -X POST http://localhost:3000/api/assistant \
 
 ```
 用户自然语言输入
-  → RuleBasedLlm.parseRequest   # LLM 只做理解，提取结构化条件
-  → CargoRepository.listAll     # 查真实/Mock 数据（禁止凭空生成）
-  → filterCargoes               # 业务代码过滤（车型/载重/回程/运距/收益下限）
-  → calcCost + scoreCargo       # 业务代码计算成本与评分
-  → rankCargoes 取 Top N        # 业务代码排序
-  → LlmPort.explain             # LLM 基于真实结果组织解释（不编造数字）
+  → LlmPort.parseRequest       # LLM 只做理解；默认规则引擎，配 key 走 DeepSeek
+  → CargoRepository.listAll    # 查真实/Mock 数据（禁止凭空生成）
+  → filterCargoes              # 业务代码过滤（车型/载重/回程/运距/收益下限）
+  → calcCost + scoreCargo      # 业务代码计算成本与评分（与大厅同口径 costFor）
+  → rankCargoes 取 Top N       # 业务代码排序
+  → LlmPort.explain            # LLM 基于真实结果组织解释（不编造数字）
 ```
 
 ## 六、AI 边界（重要设计原则）
@@ -232,8 +240,7 @@ curl -X POST http://localhost:3000/api/assistant \
 - ❌ AI 不负责：计算油费/成本/净收益/评分/排序（全部业务代码完成）
 - ❌ AI 不虚构：货源、运费、里程、收益（全部来自数据层）
 
-阶段一用 `RuleBasedLlm`（规则解析，零配置、测试确定）；接口 `LlmPort` 已就绪，
-接入真实 LLM（OpenAI/DeepSeek）只需新增一个实现类，业务流程零改动。
+默认用 `RuleBasedLlm`（规则解析，零配置、测试确定）；配置 `DEEPSEEK_API_KEY` 后由 `selectLlm` 切到 DeepSeek 官方（失败/超时自动回退规则引擎），业务层只依赖 `LlmPort`，换厂商零改动。
 
 ## 七、数据访问层（Mock → 真实 API）
 
@@ -304,8 +311,8 @@ npm test
 - [x] **P16 高德真实数据 + 货主信用管理**：高德 API 接入（真实路线规划 971km/过路费/导航步骤 + 真实天气改用 adcode + 真实沿途加油站/餐馆，AMAP_KEY 可配无 key 回退 Mock）+ 货主信用管理页（`/credits`：列出全部货主评分/好坏差/黑名单/标签/备注，可评价（👍+1/0/👎−3+标签+备注）、移出黑名单，从"我的"页入口进入）
 - [ ] **P17 真实化冲刺**：真实货源 API、短信/行情 Key 接入、微信扫码、HTTPS 正式部署、小程序真机联调、服务端 PDF 报表
 
-> 演示版（`../卡友助手.html`）与微信小程序（`../小程序版/`）是**交互蓝本**，
-> 本工程是其"产品化/工程化"落地。既有演示文件保持不动。
+> 旧演示蓝本（`卡友助手.html`、`小程序版/`）当前不在本仓库、也不在 `D:\字研班` 工作区；
+> 本仓库是唯一落地实现，不要按旧路径找文件。
 
 ## 🔑 高德 API 配置（P4 真实数据）
 
