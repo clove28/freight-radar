@@ -16,7 +16,7 @@ P0「文档与工程基建收敛」已完成；下一步进入 **P1**：PRD、�
 | 2026-10-29 | 修复 UAT-04：AI 助手与大厅金额口径统一（注入真实空驶里程/策略） | `8c8150d` |
 | 2026-10-29 | 验收标准快照更新（UAT-04 已回归） | `24544c4` |
 | 2026-10-29 | P0：AGENTS 瘦身为入口 + docs 索引/architecture/env/testing/pitfalls + README API 表/死链/AI 流程修复 + 文档新鲜度校验 + engines/LICENSE/CI + tag | 见 `git log --oneline -6` |
-| 2026-10-29 | 删除 Gitee 遗留分支 `master`；GitHub 镜像同步因缺凭据待补（已确认用 force 镜像） | 见本次 docs 提交 |
+| 2026-10-29 | 删除 Gitee 遗留分支 `master`；GitHub 镜像 force 同步完成（旧历史留本地 `backup/github-main`） | 见本次 docs 提交 |
 
 ## 3. 未完成 / 下一步（按顺序）
 
@@ -25,7 +25,7 @@ P0「文档与工程基建收敛」已完成；下一步进入 **P1**：PRD、�
 3. **P1** `docs/验收记录/`：按验收标准 §12 补 4 份（P3 / P14 / P16 / UAT-04）。
 4. **P1** 分支/PR 模板；阶段收尾打 `v0.x.0` tag。
 5. **P2** 前端最小测试、ESLint/Prettier 二选一（或删除相关声明）、`.editorconfig`。
-6. **待补凭据后执行**：GitHub 镜像同步——已确认用 **force 镜像**（`git push --force-with-lease origin main`）；本机无 GitHub 凭据（GCM 未登录、SSH key 未登记到 GitHub）。Gitee `master` 已于 2026-10-29 删除。
+6. ✅ GitHub 镜像已 force 同步（2026-10-29，`origin/main` = `gitee/main`）；Gitee `master` 已删除。后续保持两边同步即可（规则见 [pitfalls.md](pitfalls.md)）。
 
 ## 4. 环境
 

@@ -94,8 +94,9 @@
   - 规则：默认值只在一处定义（代码），compose 写 `${DEEPSEEK_MODEL:-deepseek-flash}`；`docs.test.ts` 校验一致。
   - 反例：2026-10-29 P0 修复前。
 
-- **远端历史分叉（GitHub 镜像未同步）**
-  - 现象：`gitee/main` 最新、`origin/main` 停在 2026-08-29 且与 main 无共同祖先；`gitee/master` 是迁移遗留（2026-10-29 已删除）。
+- **远端历史分叉（2026-10-29 已收敛）**
+  - 现象：曾出现 `gitee/main` 最新、`origin/main` 停在 2026-08-29 且与 main 无共同祖先；`gitee/master` 是迁移遗留。
   - 根因：主推 Gitee，GitHub 镜像长期未同步；历史曾整包导入。
-  - 规则：**Gitee `main` 是唯一 SSOT**；GitHub 只做镜像，用 `git push --force-with-lease origin main` 同步（需 GitHub 凭据）；不要往 GitHub 分支提交；CI 依赖 GitHub 时先确认镜像已同步。
+  - 处理：2026-10-29 删除 Gitee `master`；GitHub 用 `git push --force-with-lease origin main` 镜像到同一历史，旧 GitHub 历史保存在本地 `backup/github-main` 分支。
+  - 规则：**Gitee `main` 是唯一 SSOT**；GitHub 只读镜像，不要往 GitHub 分支提交；镜像用 force-with-lease，别用普通 merge 造双根。
   - 反例：简历贴 GitHub 会看到两个月前的旧代码。
